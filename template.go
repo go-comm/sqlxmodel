@@ -71,8 +71,9 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 		if where, ok := whereAndArgs[0].(string); ok {
 			if strings.Index(where, "where") < 0 {
 				sqlBuilder.WriteString(" where ")
+			} else {
+				sqlBuilder.WriteString(" ")
 			}
-			sqlBuilder.WriteString(" ")
 			sqlBuilder.WriteString(where)
 		} else {
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -163,9 +164,10 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 		sqlBuilder.WriteString(" where {{ FormattedField .PrimaryKey }}=:{{ .PrimaryKey }}")
 	} else {
 		if strings.Index(where, "where") < 0 {
-			sqlBuilder.WriteString(" where")
+			sqlBuilder.WriteString(" where ")
+		} else {
+			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(" ")
 		sqlBuilder.WriteString(where)
 	}
 	rs, err := db.NamedExecContext(ctx, sqlBuilder.String(), values)
