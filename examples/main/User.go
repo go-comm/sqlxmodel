@@ -1,9 +1,7 @@
 package main
 
-type User struct {
-	UID        string `json:"uid,omitempty" db:"uid"`
-	Name       string `json:"name,omitempty" db:"name"`
-	Email      string `json:"email,omitempty" db:"email"`
+type Base struct {
+	ID         string `json:"id,omitempty" db:"id"`
 	CreateTime int64  `json:"createtime,omitempty" db:"createtime"`
 	Creater    string `json:"creater,omitempty" db:"creater"`
 	ModifyTime int64  `json:"modifytime,omitempty" db:"modifytime"`
@@ -13,10 +11,16 @@ type User struct {
 	Deleted    bool   `json:"deleted,omitempty" db:"deleted"`
 }
 
-func (u User) TableName() string {
-	return "t_user"
+func (Base) PrimaryKey() string {
+	return "id"
 }
 
-func (u User) PrimaryKey() string {
-	return "uid"
+type User struct {
+	Base
+	Name  string `json:"name,omitempty" db:"name"`
+	Email string `json:"email,omitempty" db:"email"`
+}
+
+func (u User) TableName() string {
+	return "t_user"
 }

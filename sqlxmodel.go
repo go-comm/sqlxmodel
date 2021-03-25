@@ -56,6 +56,8 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 		PrimaryKey() string
 	}); ok {
 		possiblePrimaryKey = primaryKeyer.PrimaryKey()
+	} else {
+		log.Panicf("Func %v.PrimaryKey must be defined", mi.Name)
 	}
 
 	m.Mapper.TravelFieldFunc(t, func(fi *FieldInfo) {
@@ -77,7 +79,7 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 	})
 
 	if len(mi.PrimaryKey) <= 0 {
-		log.Panicf("Func %v.PrimaryKey must be defined", mi.Name)
+		log.Panicf("%v.PrimaryKey can not be empty", mi.Name)
 		return mi
 	}
 

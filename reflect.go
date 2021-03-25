@@ -43,21 +43,30 @@ func (mapper *ReflectMapper) TryMap(t reflect.Type) *StructMap {
 }
 
 func (mapper *ReflectMapper) getMapping(t reflect.Type) *StructMap {
-	t = Deref(t)
-	fieldinfos := []*FieldInfo{}
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		if f.Anonymous {
-			continue
+	var fieldinfos []*FieldInfo
+	var queue []reflect.Type
+	queue = append(queue, Deref(t))
+
+	for len(queue) > 0 {
+		t = queue[0]
+		queue = queue[1:]
+
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			if f.Anonymous {
+				queue = append(queue, Deref(f.Type))
+				continue
+			}
+			tagVal := f.Tag.Get(mapper.tagName)
+			fi := &FieldInfo{
+				Index:       i,
+				Name:        f.Name,
+				Tag:         tagVal,
+				StructField: f,
+			}
+			fieldinfos = append(fieldinfos, fi)
 		}
-		tagVal := f.Tag.Get(mapper.tagName)
-		fi := &FieldInfo{
-			Index:       i,
-			Name:        f.Name,
-			Tag:         tagVal,
-			StructField: f,
-		}
-		fieldinfos = append(fieldinfos, fi)
+
 	}
 
 	m := &StructMap{Index: fieldinfos, TagNames: map[string]*FieldInfo{}}
