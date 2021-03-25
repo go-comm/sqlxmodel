@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-comm/sqlxmodel"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,6 +20,7 @@ var (
 	_ context.Context
 	_ sql.DB
 	_ sqlx.DB
+	_ sqlxmodel.SqlxModel
 
 	_ = strings.Join
 	_ = fmt.Println
@@ -32,7 +34,7 @@ var {{ .Name | Title }}Model = new({{ .Name }})
 // var records []*{{ .Name }}
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
-func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db *sqlx.DB, dest interface{}, selection string, pk interface{}) error {
+func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	if selection == "" {
@@ -51,7 +53,7 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 // var record {{ .Name }}
 // QueryFirst(ctx, db, &record, "", "where {{ FormattedField .PrimaryKey }}=?", 100)
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
-func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db *sqlx.DB, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -84,7 +86,7 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db *sqlx.DB, de
 // var records []*{{ .Name }}
 // QueryList(ctx, db, &records, "", "where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc", 100)
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
-func (model {{ .Name | Title }}) QueryList(ctx context.Context, db *sqlx.DB, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -109,13 +111,13 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db *sqlx.DB, des
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
 		}
 	}
-	return db.GetContext(ctx, dest, sqlBuilder.String(), args...)
+	return db.SelectContext(ctx, dest, sqlBuilder.String(), args...)
 }
 
 // Update update a record
 // Update(ctx, db, "{{ JoinForUpdate .Fields .PrimaryKey }}", "where {{ .PrimaryKey }}=?", "Foo", 100)
 // SQL: Update {{ .TableName }} set {{ JoinForUpdate .Fields .PrimaryKey }} where {{ .PrimaryKey }}=?
-func (model {{ .Name | Title }}) Update(ctx context.Context, db *sql.DB, selection string, whereAndArgs ...interface{}) (int64, error) {
+func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (int64, error) {
 	if len(selection) <= 0 {
 		return 0, nil
 	}
@@ -145,7 +147,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db *sql.DB, selecti
 // NamedUpdate update a record
 // NamedUpdate(ctx, db, "", "", &record)
 // SQL: Update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
-func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db *sqlx.DB, selection string, where string, values interface{}) (int64, error) {
+func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update {{ .TableName }} set")
@@ -173,12 +175,12 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db *sqlx.DB, s
 // Insert insert a record
 // Insert(ctx, db, &record)
 // SQL: insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})
-func (model {{ .Name | Title }}) Insert(ctx context.Context, db *sqlx.DB, values interface{}) (sql.Result, error) {
+func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
 	return db.NamedExecContext(ctx, "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})", values)
 }
 
 // Save insert or update a record
-func (model {{ .Name | Title }}) Save(ctx context.Context, db *sqlx.DB, values *{{ .Name | Title }}) error {
+func (model {{ .Name | Title }}) Save(ctx context.Context, db sqlxmodel.NamedExecContext, values *{{ .Name | Title }}) error {
 	v := reflect.Indirect(reflect.ValueOf(values))
 	fv := v.FieldByName("{{ .PrimaryKeyStructField }}")
 	if fv.IsZero() {

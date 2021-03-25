@@ -1,6 +1,8 @@
 package sqlxmodel
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"os"
 	"reflect"
@@ -8,6 +10,22 @@ import (
 	"sync"
 	"text/template"
 )
+
+type NamedExecContext interface {
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+}
+
+type SelectContext interface {
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
+
+type GetContext interface {
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
+
+type ExecContext interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+}
 
 type ModelFieldInfo struct {
 	FieldName       string
