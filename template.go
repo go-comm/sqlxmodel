@@ -57,7 +57,6 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
-	sqlBuilder.WriteString("select ")
 	if selection == "" {
 		sqlBuilder.WriteString("select {{ .Fields | Join }}")
 	} else {
@@ -66,13 +65,14 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString("from {{ .TableName }}")
+	sqlBuilder.WriteString(" from {{ .TableName }}")
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
 			if strings.Index(where, "where") < 0 {
 				sqlBuilder.WriteString(" where ")
 			}
+			sqlBuilder.WriteString(" ")
 			sqlBuilder.WriteString(where)
 		} else {
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -90,7 +90,6 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
-	sqlBuilder.WriteString("select ")
 	if selection == "" {
 		sqlBuilder.WriteString("select {{ .Fields | Join }}")
 	} else {
@@ -99,12 +98,14 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString("from {{ .TableName }}")
+	sqlBuilder.WriteString(" from {{ .TableName }}")
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
 			if strings.Index(where, "where") < 0 {
 				sqlBuilder.WriteString(" where ")
+			} else {
+				sqlBuilder.WriteString(" ")
 			}
 			sqlBuilder.WriteString(where)
 		} else {
@@ -131,6 +132,8 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 		if where, ok := whereAndArgs[0].(string); ok {
 			if strings.Index(where, "where") < 0 {
 				sqlBuilder.WriteString(" where ")
+			} else {
+				sqlBuilder.WriteString(" ")
 			}
 			sqlBuilder.WriteString(where)
 		} else {
