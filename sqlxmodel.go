@@ -105,7 +105,7 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 	if err != nil {
 		return err
 	}
-	f, _ := os.Create(path)
+	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
