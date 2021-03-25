@@ -184,36 +184,6 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 	return db.NamedExecContext(ctx, "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})", values)
 }
 
-// Save insert or update a record
-func (model {{ .Name | Title }}) Save(ctx context.Context, db sqlxmodel.NamedExecContext, values *{{ .Name | Title }}) error {
-	v := reflect.Indirect(reflect.ValueOf(values))
-	fv := v.FieldByName("{{ .PrimaryKeyStructField }}")
-	if fv.IsZero() {
-		rs, err := model.Insert(ctx, db, values)
-		if err != nil {
-			return err
-		}
-		if fv.CanSet() {
-			switch fv.Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				last, err := rs.LastInsertId()
-				if err != nil {
-					return err
-				}
-				fv.SetInt(last)
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				last, err := rs.LastInsertId()
-				if err != nil {
-					return err
-				}
-				fv.SetUint(uint64(last))
-			}
-		}
-		return nil
-	}
-	_, err := model.NamedUpdate(ctx, db, "", "", values)
-	return err
-}
 `
 
 func isEmpty(s string) bool {
