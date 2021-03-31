@@ -2,7 +2,8 @@ package sqlxmodel
 
 import "strings"
 
-var tplText = `// !!!Don't Edit it!!!
+func getTpl() string {
+	return `// !!!Don't Edit it!!!
 package {{ .PackageName }}
 
 import (
@@ -31,8 +32,11 @@ var (
 var {{ .Name | Title }}Model = new({{ .Name }})
 
 // QueryFirstByPrimaryKey query one record by primary key
+//
 // var records []*{{ .Name }}
+//
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
+//
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
 func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
@@ -46,12 +50,18 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1")
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), pk)
 }
 
 // QueryFirst query one record
+//
 // var record {{ .Name }}
+//
 // QueryFirst(ctx, db, &record, "", "where {{ FormattedField .PrimaryKey }}=?", 100)
+//
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
 func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
@@ -80,12 +90,18 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 		}
 	}
 	sqlBuilder.WriteString(" limit 1")
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), args...)
 }
 
 // QueryList query all records
+//
 // var records []*{{ .Name }}
+//
 // QueryList(ctx, db, &records, "", "where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc", 100)
+//
 // SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
 func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
@@ -113,16 +129,18 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
 		}
 	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
 	return db.SelectContext(ctx, dest, sqlBuilder.String(), args...)
 }
 
 // Update update a record
+//
 // Update(ctx, db, "{{ JoinForUpdate .Fields .PrimaryKey }}", "where {{ .PrimaryKey }}=?", "Foo", 100)
-// SQL: Update {{ .TableName }} set {{ JoinForUpdate .Fields .PrimaryKey }} where {{ .PrimaryKey }}=?
-func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (int64, error) {
-	if len(selection) <= 0 {
-		return 0, nil
-	}
+//
+// SQL: update {{ .TableName }} set {{ JoinForUpdate .Fields .PrimaryKey }} where {{ .PrimaryKey }}=?
+func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
@@ -138,20 +156,21 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 			}
 			sqlBuilder.WriteString(where)
 		} else {
-			return 0, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
 		}
 	}
-	rs, err := db.ExecContext(ctx, sqlBuilder.String(), args...)
-	if err != nil {
-		return 0, err
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
-	return rs.RowsAffected()
+	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
 
 // NamedUpdate update a record
+//
 // NamedUpdate(ctx, db, "", "", &record)
-// SQL: Update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
-func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (int64, error) {
+//
+// SQL: update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
+func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update {{ .TableName }} set")
@@ -170,21 +189,80 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 		}
 		sqlBuilder.WriteString(where)
 	}
-	rs, err := db.NamedExecContext(ctx, sqlBuilder.String(), values)
-	if err != nil {
-		return 0, err
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
-	return rs.RowsAffected()
+	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
+}
+
+// NamedUpdateColumns update a record
+//
+// NamedUpdateColumns(ctx, db, nil, "", &record)
+//
+// SQL: update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
+//
+// columns: []string{"id","version=version+1"} is also supported.
+func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
+	var sqlBuilder strings.Builder
+	sqlBuilder.Grow(128)
+	sqlBuilder.WriteString("update t_user set")
+	if len(columns) == 0 {
+		sqlBuilder.WriteString(" {{ JoinForNamedUpdate .Fields .PrimaryKey }}")
+	} else {
+		var formatColumn = func(s string) string {
+			var p int = -1
+			for i := 0; i < len(s); i++ {
+				if s[i] == '=' {
+					p = i
+					break
+				}
+			}
+			if p < 0 {
+				return "` + "`" + `" + s + "` + "`" + `:" + s
+			}
+			if p >= len(s)-1 || p <= 0 {
+				return ""
+			}
+			return s
+		}
+		sqlBuilder.WriteString(" ")
+		sqlBuilder.WriteString(formatColumn(columns[0]))
+		for i := 1; i < len(columns); i++ {
+			sqlBuilder.WriteString(",")
+			sqlBuilder.WriteString(formatColumn(columns[i]))
+		}
+	}
+	if where == "" {
+		sqlBuilder.WriteString(" where {{ FormattedField .PrimaryKey }}=:{{ .PrimaryKey }}")
+	} else {
+		if strings.Index(where, "where") < 0 {
+			sqlBuilder.WriteString(" where ")
+		} else {
+			sqlBuilder.WriteString(" ")
+		}
+		sqlBuilder.WriteString(where)
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
+	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
 // Insert insert a record
+//
 // Insert(ctx, db, &record)
+//
 // SQL: insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})
 func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
-	return db.NamedExecContext(ctx, "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})", values)
+	s := "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})"
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(s)
+	}
+	return db.NamedExecContext(ctx, s, values)
 }
 
 `
+}
 
 func isEmpty(s string) bool {
 	return len(s) <= 0

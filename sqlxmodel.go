@@ -119,7 +119,7 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 			"Title":              strings.Title,
 			"FormattedField":     formattedField,
 		}).
-		Parse(tplText)
+		Parse(getTpl())
 	if err != nil {
 		return err
 	}
@@ -128,4 +128,23 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 		return err
 	}
 	return tpl.Execute(f, mi)
+}
+
+var (
+	gShowSQL                           = true
+	gSQLPrinter func(v ...interface{}) = log.Println
+)
+
+func SetShowSQL(t bool) {
+	gShowSQL = t
+}
+
+func ShowSQL() bool {
+	return gShowSQL
+}
+
+func PrintSQL(v ...interface{}) {
+	if gShowSQL && gSQLPrinter != nil {
+		gSQLPrinter(v...)
+	}
 }
