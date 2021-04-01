@@ -69,7 +69,7 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 		mi.TableName = mi.Name
 	}
 	// primary key
-	var possiblePrimaryKey = ""
+	possiblePrimaryKey := ""
 	if primaryKeyer, ok := e.(interface {
 		PrimaryKey() string
 	}); ok {
