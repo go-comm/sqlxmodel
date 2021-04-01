@@ -162,7 +162,7 @@ func WithIn(where string, args ...interface{}) (string, []interface{}) {
 		return false
 	}
 	// find '?' after 'in'
-	pQ := pIn + 3
+	pQ := pIn + 2
 	for ; pQ < len(where) && isSpace(where[pQ]); pQ++ {
 	}
 	if !(pQ < len(where) && where[pQ] == '?') {
@@ -173,7 +173,7 @@ func WithIn(where string, args ...interface{}) (string, []interface{}) {
 		return where, args
 	}
 	tv := reflect.TypeOf(args[c])
-	if tv.Kind() != reflect.Slice && tv.Kind() != reflect.Array {
+	if !(args[c] == nil || tv.Kind() == reflect.Slice || tv.Kind() == reflect.Array) {
 		return where, args
 	}
 	rv := reflect.ValueOf(args[c])
@@ -181,7 +181,7 @@ func WithIn(where string, args ...interface{}) (string, []interface{}) {
 	var nargs []interface{}
 	s.WriteString(where[:pQ])
 	nargs = append(nargs, args[:c]...)
-	if rv.Len() <= 0 {
+	if args[c] == nil || rv.Len() <= 0 {
 		s.WriteString("(NULL)")
 	} else {
 		s.WriteByte('(')
@@ -197,4 +197,11 @@ func WithIn(where string, args ...interface{}) (string, []interface{}) {
 	s.WriteString(where[pQ+1:])
 	nargs = append(nargs, args[c+1:]...)
 	return s.String(), nargs
+}
+
+func JoinSlice(x interface{}, args ...interface{}) []interface{} {
+	s := make([]interface{}, 0, len(args)+1)
+	s = append(s, x)
+	s = append(s, args...)
+	return s
 }
