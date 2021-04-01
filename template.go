@@ -207,7 +207,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 // SQL: update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
 //
 // columns: []string{"id","version=version+1"} is also supported.
-func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
+func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_user set")
