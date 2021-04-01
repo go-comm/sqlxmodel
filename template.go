@@ -192,6 +192,11 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
+	if e, ok := values.(interface {
+		BeforeUpdate()
+	}); ok {
+		e.BeforeUpdate()
+	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
@@ -245,6 +250,11 @@ func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
+	if e, ok := values.(interface {
+		BeforeUpdate()
+	}); ok {
+		e.BeforeUpdate()
+	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
@@ -257,6 +267,11 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 	s := "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})"
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(s)
+	}
+	if e, ok := values.(interface {
+		BeforeInsert()
+	}); ok {
+		e.BeforeInsert()
 	}
 	return db.NamedExecContext(ctx, s, values)
 }
