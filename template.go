@@ -223,7 +223,7 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 				}
 			}
 			if p < 0 {
-				return "` + "`" + `" + s + "` + "`" + `:" + s
+				return "` + "`" + `" + s + "` + "`" + `=:" + s
 			}
 			if p >= len(s)-1 || p <= 0 {
 				return ""
