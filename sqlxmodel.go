@@ -148,3 +148,53 @@ func PrintSQL(v ...interface{}) {
 		gSQLPrinter(v...)
 	}
 }
+
+func WithIn(where string, args ...interface{}) (string, []interface{}) {
+	pIn := strings.Index(where, "in")
+	if pIn < 0 {
+		return where, args
+	}
+	isSpace := func(r byte) bool {
+		switch r {
+		case '\t', '\n', '\v', '\f', '\r', ' ':
+			return true
+		}
+		return false
+	}
+	// find '?' after 'in'
+	pQ := pIn + 3
+	for ; pQ < len(where) && isSpace(where[pQ]); pQ++ {
+	}
+	if !(pQ < len(where) && where[pQ] == '?') {
+		return where, args
+	}
+	c := strings.Count(where[:pIn], "?")
+	if c >= len(args) {
+		return where, args
+	}
+	tv := reflect.TypeOf(args[c])
+	if tv.Kind() != reflect.Slice && tv.Kind() != reflect.Array {
+		return where, args
+	}
+	rv := reflect.ValueOf(args[c])
+	var s strings.Builder
+	var nargs []interface{}
+	s.WriteString(where[:pQ])
+	nargs = append(nargs, args[:c]...)
+	if rv.Len() <= 0 {
+		s.WriteString("(NULL)")
+	} else {
+		s.WriteByte('(')
+		for i := 0; i < rv.Len(); i++ {
+			if i > 0 {
+				s.WriteByte(',')
+			}
+			s.WriteByte('?')
+			nargs = append(nargs, rv.Index(i).Interface())
+		}
+		s.WriteByte(')')
+	}
+	s.WriteString(where[pQ+1:])
+	nargs = append(nargs, args[c+1:]...)
+	return s.String(), nargs
+}
