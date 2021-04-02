@@ -1,6 +1,9 @@
 package sqlxmodel
 
-import "strings"
+import (
+	"strings"
+	"text/template"
+)
 
 func getTpl() string {
 	return `// !!!Don't Edit it!!!
@@ -37,12 +40,12 @@ var {{ .Name | Title }}Model = new({{ .Name }})
 //
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
-// SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
+// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
 func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ .Fields | Join }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
 		if strings.Index(selection, "select") < 0 {
 			sqlBuilder.WriteString("select ")
@@ -62,13 +65,13 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 //
 // QueryFirst(ctx, db, &record, "", "where {{ FormattedField .PrimaryKey }}=?", 100)
 //
-// SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
+// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=? limit 1
 func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ .Fields | Join }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
 		if strings.Index(selection, "select") < 0 {
 			sqlBuilder.WriteString("select ")
@@ -103,13 +106,13 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 //
 // QueryList(ctx, db, &records, "", "where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc", 100)
 //
-// SQL: select {{ .Fields | Join }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
+// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
 func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ .Fields | Join }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
 		if strings.Index(selection, "select") < 0 {
 			sqlBuilder.WriteString("select ")
@@ -139,9 +142,9 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 
 // Update update a record
 //
-// Update(ctx, db, "{{ JoinForUpdate .Fields .PrimaryKey }}", "where {{ .PrimaryKey }}=?", "Foo", 100)
+// Update(ctx, db, "{{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }}", "where {{ .PrimaryKey }}=?", 100)
 //
-// SQL: update {{ .TableName }} set {{ JoinForUpdate .Fields .PrimaryKey }} where {{ .PrimaryKey }}=?
+// SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }} where {{ .PrimaryKey }}=?
 func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
@@ -172,13 +175,13 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 //
 // NamedUpdate(ctx, db, "", "", &record)
 //
-// SQL: update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
+// SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
 func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update {{ .TableName }} set")
 	if selection == "" {
-		sqlBuilder.WriteString(" {{ JoinForNamedUpdate .Fields .PrimaryKey }}")
+		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
 		sqlBuilder.WriteString(selection)
 	}
@@ -207,7 +210,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 //
 // NamedUpdateColumns(ctx, db, nil, "", &record)
 //
-// SQL: update {{ .TableName }} set {{ JoinForNamedUpdate .Fields .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
+// SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
 //
 // columns: []string{"id","version=version+1"} is also supported.
 func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
@@ -215,7 +218,7 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update {{ .TableName }} set")
 	if len(columns) == 0 {
-		sqlBuilder.WriteString(" {{ JoinForNamedUpdate .Fields .PrimaryKey }}")
+		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
 		var formatColumn = func(s string) string {
 			var p int = -1
@@ -265,9 +268,9 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 //
 // Insert(ctx, db, &record)
 //
-// SQL: insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})
+// SQL: insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})
 func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
-	s := "insert into {{ .TableName }}({{ Join .Fields }})values({{ JoinForInsert .Fields }})"
+	s := "insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(s)
 	}
@@ -327,24 +330,8 @@ func isEmpty(s string) bool {
 	return len(s) <= 0
 }
 
-func joinFields(fields []*ModelFieldInfo) string {
-	if len(fields) <= 0 {
-		return ""
-	}
-	var s strings.Builder
-	s.WriteString("`")
-	s.WriteString(fields[0].FieldName)
-	s.WriteString("`")
-	for i := 1; i < len(fields); i++ {
-		s.WriteString(",`")
-		s.WriteString(fields[i].FieldName)
-		s.WriteString("`")
-	}
-	return s.String()
-}
-
-func joinFieldsForUpdate(fields []*ModelFieldInfo, ignores ...string) string {
-	var fs []string
+func join(fields []*ModelFieldInfo, sep string, fn func(e map[string]string) string, ignores ...string) string {
+	var fs []*ModelFieldInfo
 	for i := 0; i < len(fields); i++ {
 		have := false
 		for j := 0; j < len(ignores); j++ {
@@ -354,67 +341,40 @@ func joinFieldsForUpdate(fields []*ModelFieldInfo, ignores ...string) string {
 			}
 		}
 		if !have {
-			fs = append(fs, fields[i].FieldName)
+			fs = append(fs, fields[i])
 		}
 	}
 	if len(fs) <= 0 {
 		return ""
 	}
 	var s strings.Builder
-	s.WriteString("`")
-	s.WriteString(fs[0])
-	s.WriteString("`=?")
-	for i := 1; i < len(fs); i++ {
-		s.WriteString(",`")
-		s.WriteString(fs[i])
-		s.WriteString("`=?")
+	for i := 0; i < len(fs); i++ {
+		if i > 0 {
+			s.WriteString(sep)
+		}
+		e := map[string]string{
+			"Field":          fs[i].FieldName,
+			"NamedField":     namedField(fs[i].FieldName),
+			"FormattedField": formattedField(fs[i].FieldName),
+		}
+		s.WriteString(fn(e))
 	}
 	return s.String()
 }
 
-func joinFieldsForNamedUpdate(fields []*ModelFieldInfo, ignores ...string) string {
-	var fs []string
-	for i := 0; i < len(fields); i++ {
-		have := false
-		for j := 0; j < len(ignores); j++ {
-			if fields[i].FieldName == ignores[j] {
-				have = true
-				break
-			}
-		}
-		if !have {
-			fs = append(fs, fields[i].FieldName)
-		}
-	}
-	if len(fs) <= 0 {
-		return ""
-	}
-	var s strings.Builder
-	s.WriteString("`")
-	s.WriteString(fs[0])
-	s.WriteString("`=:")
-	s.WriteString(fs[0])
-	for i := 1; i < len(fs); i++ {
-		s.WriteString(",`")
-		s.WriteString(fs[i])
-		s.WriteString("`=:")
-		s.WriteString(fs[i])
-	}
-	return s.String()
+func joinExpr(fields []*ModelFieldInfo, expr string, ignores ...string) string {
+	tpl := template.New("")
+	tpl.Delims("${", "}")
+	template.Must(tpl.Parse(expr))
+	return join(fields, ",", func(e map[string]string) string {
+		var s strings.Builder
+		tpl.Execute(&s, e)
+		return s.String()
+	}, ignores...)
 }
 
-func joinFieldsForInsert(fields []*ModelFieldInfo) string {
-	if len(fields) <= 0 {
-		return ""
-	}
-	var s strings.Builder
-	s.WriteString(":")
-	s.WriteString(fields[0].FieldName)
-	for i := 1; i < len(fields); i++ {
-		s.WriteString(",:")
-		s.WriteString(fields[i].FieldName)
-	}
-	return s.String()
+func namedField(s string) string {
+	return ":" + s
 }
 
 func formattedField(s string) string {

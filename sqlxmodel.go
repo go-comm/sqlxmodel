@@ -111,13 +111,10 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 	mi := m.TryModel(e)
 	tpl, err := template.New("").
 		Funcs(template.FuncMap{
-			"IsEmpty":            isEmpty,
-			"Join":               joinFields,
-			"JoinForUpdate":      joinFieldsForUpdate,
-			"JoinForNamedUpdate": joinFieldsForNamedUpdate,
-			"JoinForInsert":      joinFieldsForInsert,
-			"Title":              strings.Title,
-			"FormattedField":     formattedField,
+			"IsEmpty":        isEmpty,
+			"Title":          strings.Title,
+			"FormattedField": formattedField,
+			"JoinExpr":       joinExpr,
 		}).
 		Parse(getTpl())
 	if err != nil {
