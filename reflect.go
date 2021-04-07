@@ -101,7 +101,25 @@ func (mapper *ReflectMapper) TravelFieldsFunc(t reflect.Type, fn func(*FieldInfo
 	}
 }
 
-func (mapper *ReflectMapper) TraversalsByNameFunc(t reflect.Type, names []string, fn func(*FieldInfo)) {
+func (mapper *ReflectMapper) FieldByName(v reflect.Value, name string) (reflect.Value, bool) {
+	m := mapper.TryMap(v.Type())
+	fi, ok := m.Names[name]
+	if !ok {
+		return reflect.Value{}, false
+	}
+	return FieldByIndex(v, fi.Index), true
+}
+
+func (mapper *ReflectMapper) FieldByTagName(v reflect.Value, tagName string) (reflect.Value, bool) {
+	m := mapper.TryMap(v.Type())
+	fi, ok := m.TagNames[tagName]
+	if !ok {
+		return reflect.Value{}, false
+	}
+	return FieldByIndex(v, fi.Index), true
+}
+
+func (mapper *ReflectMapper) TraversalsByNamesFunc(t reflect.Type, names []string, fn func(*FieldInfo)) {
 	m := mapper.TryMap(t)
 	for _, name := range names {
 		fi, ok := m.Names[name]
@@ -111,16 +129,22 @@ func (mapper *ReflectMapper) TraversalsByNameFunc(t reflect.Type, names []string
 	}
 }
 
-func (mapper *ReflectMapper) TraversalsByName(t reflect.Type, names []string) (ls []*FieldInfo) {
-	mapper.TraversalsByNameFunc(t, names, func(fi *FieldInfo) {
+func (mapper *ReflectMapper) TraversalsByNames(t reflect.Type, names []string) (ls []*FieldInfo) {
+	mapper.TraversalsByNamesFunc(t, names, func(fi *FieldInfo) {
 		ls = append(ls, fi)
 	})
 	return
 }
 
-func (mapper *ReflectMapper) TraversalsByTagNameFunc(t reflect.Type, tagnames []string, fn func(*FieldInfo)) {
+func (mapper *ReflectMapper) TraversalsByName(t reflect.Type, name string) (*FieldInfo, bool) {
 	m := mapper.TryMap(t)
-	for _, name := range tagnames {
+	fi, ok := m.Names[name]
+	return fi, ok
+}
+
+func (mapper *ReflectMapper) TraversalsByTagNamesFunc(t reflect.Type, tagNames []string, fn func(*FieldInfo)) {
+	m := mapper.TryMap(t)
+	for _, name := range tagNames {
 		fi, ok := m.TagNames[name]
 		if ok {
 			fn(fi)
@@ -128,11 +152,17 @@ func (mapper *ReflectMapper) TraversalsByTagNameFunc(t reflect.Type, tagnames []
 	}
 }
 
-func (mapper *ReflectMapper) TraversalsByTagName(t reflect.Type, tagnames []string) (ls []*FieldInfo) {
-	mapper.TraversalsByNameFunc(t, tagnames, func(fi *FieldInfo) {
+func (mapper *ReflectMapper) TraversalsByTagNames(t reflect.Type, tagNames []string) (ls []*FieldInfo) {
+	mapper.TraversalsByNamesFunc(t, tagNames, func(fi *FieldInfo) {
 		ls = append(ls, fi)
 	})
 	return
+}
+
+func (mapper *ReflectMapper) TraversalsByTagName(t reflect.Type, tagName string) (*FieldInfo, bool) {
+	m := mapper.TryMap(t)
+	fi, ok := m.TagNames[tagName]
+	return fi, ok
 }
 
 func Deref(t reflect.Type) reflect.Type {
