@@ -27,6 +27,14 @@ type ExecContext interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
+type QueryRowContext interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+}
+
+type QueryRowsContext interface {
+	QueryRowsContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+}
+
 type ModelFieldInfo struct {
 	FieldName       string
 	StructFieldName string
