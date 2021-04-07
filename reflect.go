@@ -6,15 +6,17 @@ import (
 )
 
 type FieldInfo struct {
-	Index       int
-	Name        string
-	Tag         string
-	StructField reflect.StructField
+	Index     []int
+	Name      string
+	Tag       string
+	Type      reflect.Type
+	Anonymous bool
 }
 
 type StructMap struct {
 	Index    []*FieldInfo
 	TagNames map[string]*FieldInfo
+	Names    map[string]*FieldInfo
 }
 
 func NewReflectMapper(tagName string) *ReflectMapper {
@@ -32,56 +34,105 @@ type ReflectMapper struct {
 
 func (mapper *ReflectMapper) TryMap(t reflect.Type) *StructMap {
 	t = Deref(t)
-	mapper.mutex.Lock()
+	mapper.mutex.RLock()
 	mapping, ok := mapper.cached[t]
+	mapper.mutex.RUnlock()
 	if !ok {
-		mapping = mapper.getMapping(t)
-		mapper.cached[t] = mapping
+		mapper.mutex.Lock()
+		if !ok {
+			mapping = mapper.getMapping(t)
+			mapper.cached[t] = mapping
+		}
+		mapper.mutex.Unlock()
 	}
-	mapper.mutex.Unlock()
 	return mapping
 }
 
 func (mapper *ReflectMapper) getMapping(t reflect.Type) *StructMap {
 	var fieldinfos []*FieldInfo
-	var queue []reflect.Type
-	queue = append(queue, Deref(t))
+	var queue []*FieldInfo
+	var head *FieldInfo
+	queue = append(queue, &FieldInfo{Type: Deref(t)})
 
 	for len(queue) > 0 {
-		t = queue[0]
+		head = queue[0]
 		queue = queue[1:]
-
+		t = Deref(head.Type)
+		if t.Kind() != reflect.Struct {
+			continue
+		}
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
-			if f.Anonymous {
-				queue = append(queue, Deref(f.Type))
-				continue
+			indexes := append([]int(nil), head.Index...)
+			indexes = append(indexes, i)
+			var tag string
+			if len(mapper.tagName) > 0 {
+				tag = f.Tag.Get(mapper.tagName)
 			}
-			tagVal := f.Tag.Get(mapper.tagName)
 			fi := &FieldInfo{
-				Index:       i,
-				Name:        f.Name,
-				Tag:         tagVal,
-				StructField: f,
+				Index:     indexes,
+				Type:      Deref(f.Type),
+				Tag:       tag,
+				Anonymous: f.Anonymous,
+			}
+			if f.Anonymous {
+				queue = append(queue, fi)
+				continue
 			}
 			fieldinfos = append(fieldinfos, fi)
 		}
-
 	}
 
-	m := &StructMap{Index: fieldinfos, TagNames: map[string]*FieldInfo{}}
+	m := &StructMap{Index: fieldinfos, Names: map[string]*FieldInfo{}, TagNames: map[string]*FieldInfo{}}
 	for i := 0; i < len(m.Index); i++ {
 		f := m.Index[i]
-		m.TagNames[f.Tag] = f
+		m.Names[f.Name] = f
+		if len(f.Tag) > 0 {
+			m.TagNames[f.Tag] = f
+		}
 	}
 	return m
 }
 
-func (mapper *ReflectMapper) TravelFieldFunc(t reflect.Type, fn func(fi *FieldInfo)) {
+func (mapper *ReflectMapper) TravelFieldsFunc(t reflect.Type, fn func(*FieldInfo)) {
 	m := mapper.TryMap(t)
 	for _, v := range m.Index {
 		fn(v)
 	}
+}
+
+func (mapper *ReflectMapper) TraversalsByNameFunc(t reflect.Type, names []string, fn func(*FieldInfo)) {
+	m := mapper.TryMap(t)
+	for _, name := range names {
+		fi, ok := m.Names[name]
+		if ok {
+			fn(fi)
+		}
+	}
+}
+
+func (mapper *ReflectMapper) TraversalsByName(t reflect.Type, names []string) (ls []*FieldInfo) {
+	mapper.TraversalsByNameFunc(t, names, func(fi *FieldInfo) {
+		ls = append(ls, fi)
+	})
+	return
+}
+
+func (mapper *ReflectMapper) TraversalsByTagNameFunc(t reflect.Type, tagnames []string, fn func(*FieldInfo)) {
+	m := mapper.TryMap(t)
+	for _, name := range tagnames {
+		fi, ok := m.TagNames[name]
+		if ok {
+			fn(fi)
+		}
+	}
+}
+
+func (mapper *ReflectMapper) TraversalsByTagName(t reflect.Type, tagnames []string) (ls []*FieldInfo) {
+	mapper.TraversalsByNameFunc(t, tagnames, func(fi *FieldInfo) {
+		ls = append(ls, fi)
+	})
+	return
 }
 
 func Deref(t reflect.Type) reflect.Type {
@@ -89,4 +140,25 @@ func Deref(t reflect.Type) reflect.Type {
 		t = t.Elem()
 	}
 	return t
+}
+
+func FieldByIndex(v reflect.Value, index []int) reflect.Value {
+	for _, i := range index {
+		v = reflect.Indirect(v).Field(i)
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			alloc := reflect.New(Deref(v.Type()))
+			v.Set(alloc)
+		}
+		if v.Kind() == reflect.Map && v.IsNil() {
+			v.Set(reflect.MakeMap(v.Type()))
+		}
+	}
+	return v
+}
+
+func FieldByIndexReadOnly(v reflect.Value, index []int) reflect.Value {
+	for _, i := range index {
+		v = reflect.Indirect(v).Field(i)
+	}
+	return v
 }

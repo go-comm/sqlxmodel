@@ -86,7 +86,7 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 		log.Panicf("Func %v.PrimaryKey must be defined", mi.Name)
 	}
 
-	m.Mapper.TravelFieldFunc(t, func(fi *FieldInfo) {
+	m.Mapper.TravelFieldsFunc(t, func(fi *FieldInfo) {
 		tag := strings.TrimSpace(fi.Tag)
 		if fi.Tag == "-" {
 			return
