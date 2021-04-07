@@ -335,7 +335,7 @@ func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecCo
 
 // Count count
 //
-// Count(ctx, db, "", 100)
+// Count(ctx, db, "")
 //
 // SQL: select count(1) as c from {{ .TableName }}
 // !!!Don't Edit it!!!
