@@ -154,12 +154,17 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 // SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }} where {{ .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, section string, whereAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("update {{ .TableName }} set")
-	sqlBuilder.WriteString(selection)
+	if strings.Index(section, "set") < 0 {
+		sqlBuilder.WriteString(" set ")
+	} else {
+		sqlBuilder.WriteString(" ")
+	}
+	sqlBuilder.WriteString(section)
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
@@ -187,14 +192,19 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 // SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (sql.Result, error) {
+func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, section string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
-	sqlBuilder.WriteString("update {{ .TableName }} set")
-	if selection == "" {
+	sqlBuilder.WriteString("update {{ .TableName }}")
+	if section == "" {
 		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
-		sqlBuilder.WriteString(selection)
+		if strings.Index(section, "set") < 0 {
+			sqlBuilder.WriteString(" set ")
+		} else {
+			sqlBuilder.WriteString(" ")
+		}
+		sqlBuilder.WriteString(section)
 	}
 	if where == "" {
 		sqlBuilder.WriteString(" where {{ FormattedField .PrimaryKey }}=:{{ .PrimaryKey }}")
@@ -229,7 +239,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
-	sqlBuilder.WriteString("update {{ .TableName }} set")
+	sqlBuilder.WriteString("update {{ .TableName }}")
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
