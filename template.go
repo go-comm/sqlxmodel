@@ -32,6 +32,7 @@ var (
 )
 
 // {{ .Name | Title }}Model model of {{ .Name }}
+//
 // !!!Don't Edit it!!!
 var {{ .Name | Title }}Model = new({{ .Name }})
 
@@ -42,6 +43,7 @@ var {{ .Name | Title }}Model = new({{ .Name }})
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
 // SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
@@ -68,6 +70,7 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 // QueryFirst(ctx, db, &record, "", "where {{ FormattedField .PrimaryKey }}=?", 100)
 //
 // SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
@@ -109,6 +112,7 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 // QueryList(ctx, db, &records, "", "where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc", 100)
 //
 // SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
@@ -148,6 +152,7 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 // Update(ctx, db, "{{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }}", "where {{ .PrimaryKey }}=?", 100)
 //
 // SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }} where {{ .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecContext, selection string, whereAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
@@ -180,6 +185,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 // NamedUpdate(ctx, db, "", "", &record)
 //
 // SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, selection string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
@@ -218,6 +224,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 // SQL: update {{ .TableName }} set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }} where {{ FormattedField .PrimaryKey }}=?
 //
 // columns: []string{"id","version=version+1"} is also supported.
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
@@ -275,6 +282,7 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 // Insert(ctx, db, &record)
 //
 // SQL: insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
 	s := "insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
@@ -294,6 +302,7 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 // DeleteByPrimaryKey(ctx, db, 100)
 //
 // SQL: delete from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecContext, pk interface{}) (sql.Result, error) {
 	s := "delete from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?"
@@ -308,6 +317,7 @@ func (model {{ .Name | Title }}) DeleteByPrimaryKey(ctx context.Context, db sqlx
 // Delete(ctx, db, "where {{ FormattedField .PrimaryKey }}=?", 100)
 //
 // SQL: delete from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
@@ -338,6 +348,7 @@ func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecCo
 // Count(ctx, db, "")
 //
 // SQL: select count(1) as c from {{ .TableName }}
+//
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder

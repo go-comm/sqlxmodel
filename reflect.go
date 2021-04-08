@@ -9,14 +9,15 @@ type FieldInfo struct {
 	Index     []int
 	Name      string
 	Tag       string
-	Type      reflect.Type
 	Anonymous bool
+	Type      reflect.Type
+	StructTag reflect.StructTag
 }
 
 type StructMap struct {
-	Index    []*FieldInfo
-	TagNames map[string]*FieldInfo
-	Names    map[string]*FieldInfo
+	Index []*FieldInfo
+	Tags  map[string]*FieldInfo
+	Names map[string]*FieldInfo
 }
 
 func NewReflectMapper(tagName string) *ReflectMapper {
@@ -65,16 +66,19 @@ func (mapper *ReflectMapper) getMapping(t reflect.Type) *StructMap {
 			f := t.Field(i)
 			indexes := append([]int(nil), head.Index...)
 			indexes = append(indexes, i)
-			var tag string
-			if len(mapper.tagName) > 0 {
-				tag = f.Tag.Get(mapper.tagName)
-			}
+
 			fi := &FieldInfo{
+				Name:      f.Name,
 				Index:     indexes,
 				Type:      Deref(f.Type),
-				Tag:       tag,
+				StructTag: f.Tag,
 				Anonymous: f.Anonymous,
 			}
+
+			if len(mapper.tagName) > 0 {
+				fi.Tag = f.Tag.Get(mapper.tagName)
+			}
+
 			if f.Anonymous {
 				queue = append(queue, fi)
 				continue
@@ -83,12 +87,12 @@ func (mapper *ReflectMapper) getMapping(t reflect.Type) *StructMap {
 		}
 	}
 
-	m := &StructMap{Index: fieldinfos, Names: map[string]*FieldInfo{}, TagNames: map[string]*FieldInfo{}}
+	m := &StructMap{Index: fieldinfos, Names: map[string]*FieldInfo{}, Tags: map[string]*FieldInfo{}}
 	for i := 0; i < len(m.Index); i++ {
 		f := m.Index[i]
 		m.Names[f.Name] = f
 		if len(f.Tag) > 0 {
-			m.TagNames[f.Tag] = f
+			m.Tags[f.Tag] = f
 		}
 	}
 	return m
@@ -110,9 +114,9 @@ func (mapper *ReflectMapper) FieldByName(v reflect.Value, name string) (reflect.
 	return FieldByIndex(v, fi.Index), true
 }
 
-func (mapper *ReflectMapper) FieldByTagName(v reflect.Value, tagName string) (reflect.Value, bool) {
+func (mapper *ReflectMapper) FieldByTag(v reflect.Value, tag string) (reflect.Value, bool) {
 	m := mapper.TryMap(v.Type())
-	fi, ok := m.TagNames[tagName]
+	fi, ok := m.Tags[tag]
 	if !ok {
 		return reflect.Value{}, false
 	}
@@ -142,26 +146,26 @@ func (mapper *ReflectMapper) TraversalsByName(t reflect.Type, name string) (*Fie
 	return fi, ok
 }
 
-func (mapper *ReflectMapper) TraversalsByTagNamesFunc(t reflect.Type, tagNames []string, fn func(*FieldInfo)) {
+func (mapper *ReflectMapper) TraversalsByTagsFunc(t reflect.Type, tags []string, fn func(*FieldInfo)) {
 	m := mapper.TryMap(t)
-	for _, name := range tagNames {
-		fi, ok := m.TagNames[name]
+	for _, name := range tags {
+		fi, ok := m.Tags[name]
 		if ok {
 			fn(fi)
 		}
 	}
 }
 
-func (mapper *ReflectMapper) TraversalsByTagNames(t reflect.Type, tagNames []string) (ls []*FieldInfo) {
-	mapper.TraversalsByNamesFunc(t, tagNames, func(fi *FieldInfo) {
+func (mapper *ReflectMapper) TraversalsByTags(t reflect.Type, tags []string) (ls []*FieldInfo) {
+	mapper.TraversalsByNamesFunc(t, tags, func(fi *FieldInfo) {
 		ls = append(ls, fi)
 	})
 	return
 }
 
-func (mapper *ReflectMapper) TraversalsByTagName(t reflect.Type, tagName string) (*FieldInfo, bool) {
+func (mapper *ReflectMapper) TraversalsByTag(t reflect.Type, tag string) (*FieldInfo, bool) {
 	m := mapper.TryMap(t)
-	fi, ok := m.TagNames[tagName]
+	fi, ok := m.Tags[tag]
 	return fi, ok
 }
 
