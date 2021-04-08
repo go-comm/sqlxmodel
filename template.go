@@ -158,7 +158,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("update {{ .TableName }} set")
+	sqlBuilder.WriteString("update {{ .TableName }}")
 	if strings.Index(section, "set") < 0 {
 		sqlBuilder.WriteString(" set ")
 	} else {
