@@ -105,6 +105,13 @@ func (mapper *ReflectMapper) TravelFieldsFunc(t reflect.Type, fn func(*FieldInfo
 	}
 }
 
+func (mapper *ReflectMapper) TravelFieldsByTagsFunc(t reflect.Type, fn func(*FieldInfo)) {
+	m := mapper.TryMap(t)
+	for _, v := range m.Tags {
+		fn(v)
+	}
+}
+
 func (mapper *ReflectMapper) FieldByName(v reflect.Value, name string) (reflect.Value, bool) {
 	m := mapper.TryMap(v.Type())
 	fi, ok := m.Names[name]
