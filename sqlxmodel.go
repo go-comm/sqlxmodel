@@ -155,7 +155,7 @@ func PrintSQL(v ...interface{}) {
 }
 
 func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
-	cnt := strings.IndexByte(section, '?') + 1
+	cnt := strings.Count(section, "?")
 	if cnt <= 0 {
 		cnt = 0
 	}
@@ -178,10 +178,10 @@ func WithIn(section string, where string, args ...interface{}) (string, []interf
 		return where, args
 	}
 	c := strings.Count(where[:pIn], "?")
+	c += cnt
 	if c >= len(args) {
 		return where, args
 	}
-	c += cnt
 	tv := reflect.TypeOf(args[c])
 	if !(args[c] == nil || tv.Kind() == reflect.Slice || tv.Kind() == reflect.Array) {
 		return where, args
