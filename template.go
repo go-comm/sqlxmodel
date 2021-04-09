@@ -93,7 +93,7 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(where, args...)
+			where, args = sqlxmodel.WithIn("", where, args...)
 			sqlBuilder.WriteString(where)
 		} else {
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -135,7 +135,7 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(where, args...)
+			where, args = sqlxmodel.WithIn("", where, args...)
 			sqlBuilder.WriteString(where)
 		} else {
 			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -173,7 +173,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(where, args...)
+			where, args = sqlxmodel.WithIn(section, where, args...)
 			sqlBuilder.WriteString(where)
 		} else {
 			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -341,7 +341,7 @@ func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecCo
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(where, args...)
+			where, args = sqlxmodel.WithIn("", where, args...)
 			sqlBuilder.WriteString(where)
 		} else {
 			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
@@ -374,7 +374,7 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(where, args...)
+			where, args = sqlxmodel.WithIn("", where, args...)
 			sqlBuilder.WriteString(where)
 		} else {
 			return 0, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
