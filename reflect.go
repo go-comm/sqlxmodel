@@ -70,7 +70,7 @@ func (mapper *ReflectMapper) getMapping(t reflect.Type) *StructMap {
 			fi := &FieldInfo{
 				Name:      f.Name,
 				Index:     indexes,
-				Type:      Deref(f.Type),
+				Type:      f.Type,
 				StructTag: f.Tag,
 				Anonymous: f.Anonymous,
 			}

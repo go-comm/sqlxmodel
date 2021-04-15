@@ -1,10 +1,5 @@
 package sqlxmodel
 
-import (
-	"strings"
-	"text/template"
-)
-
 func getTpl() string {
 	return `// !!!Don't Edit it!!!
 package {{ .PackageName }}
@@ -388,60 +383,15 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 	err := row.Scan(&c)
 	return c, err
 }
+
+// RelatedWith
+//
+// RelatedWith(ctx, db, "Creater", 1)
+//
+// !!!Don't Edit it!!!
+func (model *{{ .Name | Title }}) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, field string, pk interface{}) error {
+	return sqlxmodel.RelatedWith(ctx, db, model, field, pk)
+}
+
 `
-}
-
-func isEmpty(s string) bool {
-	return len(s) <= 0
-}
-
-func join(fields []*ModelFieldInfo, sep string, fn func(e map[string]string) string, ignores ...string) string {
-	var fs []*ModelFieldInfo
-	for i := 0; i < len(fields); i++ {
-		have := false
-		for j := 0; j < len(ignores); j++ {
-			if fields[i].FieldName == ignores[j] {
-				have = true
-				break
-			}
-		}
-		if !have {
-			fs = append(fs, fields[i])
-		}
-	}
-	if len(fs) <= 0 {
-		return ""
-	}
-	var s strings.Builder
-	for i := 0; i < len(fs); i++ {
-		if i > 0 {
-			s.WriteString(sep)
-		}
-		e := map[string]string{
-			"Field":          fs[i].FieldName,
-			"NamedField":     namedField(fs[i].FieldName),
-			"FormattedField": formattedField(fs[i].FieldName),
-		}
-		s.WriteString(fn(e))
-	}
-	return s.String()
-}
-
-func joinExpr(fields []*ModelFieldInfo, expr string, ignores ...string) string {
-	tpl := template.New("")
-	tpl.Delims("${", "}")
-	template.Must(tpl.Parse(expr))
-	return join(fields, ",", func(e map[string]string) string {
-		var s strings.Builder
-		tpl.Execute(&s, e)
-		return s.String()
-	}, ignores...)
-}
-
-func namedField(s string) string {
-	return ":" + s
-}
-
-func formattedField(s string) string {
-	return "`" + s + "`"
 }

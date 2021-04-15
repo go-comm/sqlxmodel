@@ -8,8 +8,37 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"text/template"
 )
+
+type Model interface {
+	PrimaryKey() string
+
+	TableName() string
+
+	QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
+
+	QueryFirst(ctx context.Context, db GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error
+
+	QueryList(ctx context.Context, db SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error
+
+	Update(ctx context.Context, db ExecContext, section string, whereAndArgs ...interface{}) (sql.Result, error)
+
+	NamedUpdate(ctx context.Context, db NamedExecContext, section string, where string, values interface{}) (sql.Result, error)
+
+	NamedUpdateColumns(ctx context.Context, db NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error)
+
+	Insert(ctx context.Context, db NamedExecContext, values interface{}) (sql.Result, error)
+
+	DeleteByPrimaryKey(ctx context.Context, db ExecContext, pk interface{}) (sql.Result, error)
+
+	Delete(ctx context.Context, db ExecContext, whereAndArgs ...interface{}) (sql.Result, error)
+
+	Count(ctx context.Context, db QueryRowContext, whereAndArgs ...interface{}) (int64, error)
+
+	RelatedWith(ctx context.Context, db GetContext, field string, v interface{}) error
+}
 
 type NamedExecContext interface {
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
@@ -88,13 +117,10 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 
 	m.Mapper.TravelFieldsFunc(t, func(fi *FieldInfo) {
 		tag := strings.TrimSpace(fi.Tag)
-		if fi.Tag == "-" {
+		if len(tag) <= 0 || tag == "-" {
 			return
 		}
 		mfi := &ModelFieldInfo{}
-		if len(tag) <= 0 {
-			tag = fi.Name
-		}
 		mfi.FieldName = tag
 		mfi.StructFieldName = fi.Name
 		mi.Fields = append(mi.Fields, mfi)
@@ -121,6 +147,7 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 		Funcs(template.FuncMap{
 			"IsEmpty":        isEmpty,
 			"Title":          strings.Title,
+			"LowerTitle":     lowerTitle,
 			"FormattedField": formattedField,
 			"JoinExpr":       joinExpr,
 		}).
@@ -136,82 +163,65 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 }
 
 var (
-	gShowSQL                           = true
-	gSQLPrinter func(v ...interface{}) = log.Println
+	gShowSQL       int32                  = 0
+	gReflectMapper                        = NewReflectMapper("db")
+	gSQLPrinter    func(v ...interface{}) = log.Println
 )
 
-func SetShowSQL(t bool) {
-	gShowSQL = t
+func SetShowSQL(f bool) {
+	if f {
+		atomic.StoreInt32(&gShowSQL, 1)
+	} else {
+		atomic.StoreInt32(&gShowSQL, 0)
+	}
 }
 
 func ShowSQL() bool {
-	return gShowSQL
+	return atomic.LoadInt32(&gShowSQL) != 0
 }
 
 func PrintSQL(v ...interface{}) {
-	if gShowSQL && gSQLPrinter != nil {
+	if ShowSQL() && gSQLPrinter != nil {
 		gSQLPrinter(v...)
 	}
 }
 
-func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
-	cnt := strings.Count(section, "?")
-	if cnt <= 0 {
-		cnt = 0
+func RelatedWith(ctx context.Context, db GetContext, model interface{}, field string, pk interface{}) error {
+	if pk == nil || reflect.ValueOf(pk).IsZero() {
+		return nil
 	}
-	pIn := strings.Index(where, "in")
-	if pIn < 0 {
-		return where, args
+	rv := reflect.Indirect(reflect.ValueOf(model))
+	m := gReflectMapper.TryMap(rv.Type())
+	fi, ok := m.Names[field]
+	if !ok {
+		return nil
 	}
-	isSpace := func(r byte) bool {
-		switch r {
-		case '\t', '\n', '\v', '\f', '\r', ' ':
-			return true
-		}
-		return false
+	newfv := reflect.New(Deref(fi.Type))
+	ifv, ok := newfv.Interface().(interface {
+		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
+	})
+	if !ok {
+		return nil
 	}
-	// find '?' after 'in'
-	pQ := pIn + 2
-	for ; pQ < len(where) && isSpace(where[pQ]); pQ++ {
+	err := ifv.QueryFirstByPrimaryKey(ctx, db, ifv, "", pk)
+	if err != nil {
+		return err
 	}
-	if !(pQ < len(where) && where[pQ] == '?') {
-		return where, args
-	}
-	c := strings.Count(where[:pIn], "?")
-	c += cnt
-	if c >= len(args) {
-		return where, args
-	}
-	tv := reflect.TypeOf(args[c])
-	if !(args[c] == nil || tv.Kind() == reflect.Slice || tv.Kind() == reflect.Array) {
-		return where, args
-	}
-	rv := reflect.ValueOf(args[c])
-	var s strings.Builder
-	var nargs []interface{}
-	s.WriteString(where[:pQ])
-	nargs = append(nargs, args[:c]...)
-	if args[c] == nil || rv.Len() <= 0 {
-		s.WriteString("(NULL)")
+	fv := FieldByIndex(rv, fi.Index)
+	if fv.Kind() == newfv.Kind() {
+		fv.Set(newfv)
 	} else {
-		s.WriteByte('(')
-		for i := 0; i < rv.Len(); i++ {
-			if i > 0 {
-				s.WriteByte(',')
-			}
-			s.WriteByte('?')
-			nargs = append(nargs, rv.Index(i).Interface())
-		}
-		s.WriteByte(')')
+		fv.Set(reflect.Indirect(newfv))
 	}
-	s.WriteString(where[pQ+1:])
-	nargs = append(nargs, args[c+1:]...)
-	return s.String(), nargs
+	return nil
 }
 
-func JoinSlice(x interface{}, args ...interface{}) []interface{} {
-	s := make([]interface{}, 0, len(args)+1)
-	s = append(s, x)
-	s = append(s, args...)
-	return s
+func Truncate(ctx context.Context, db ExecContext, model interface{}) error {
+	if m, ok := model.(interface {
+		TableName() string
+	}); ok {
+		_, err := db.ExecContext(ctx, "Truncate "+m.TableName())
+		return err
+	}
+	return nil
 }
