@@ -7,6 +7,21 @@ import (
 	"unicode"
 )
 
+func isSpace(r byte) bool {
+	switch r {
+	case '\t', '\n', '\v', '\f', '\r', ' ':
+		return true
+	}
+	return false
+}
+
+func HasPrefixToken(s string, token string) bool {
+	i := 0
+	for ; i < len(s) && isSpace(s[i]); i++ {
+	}
+	return strings.HasPrefix(s[i:], token)
+}
+
 func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
 	cnt := strings.Count(section, "?")
 	if cnt <= 0 {
@@ -15,13 +30,6 @@ func WithIn(section string, where string, args ...interface{}) (string, []interf
 	pIn := strings.Index(where, "in")
 	if pIn < 0 {
 		return where, args
-	}
-	isSpace := func(r byte) bool {
-		switch r {
-		case '\t', '\n', '\v', '\f', '\r', ' ':
-			return true
-		}
-		return false
 	}
 	// find '?' after 'in'
 	pQ := pIn + 2

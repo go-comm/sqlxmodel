@@ -46,7 +46,7 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 	if selection == "" {
 		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
-		if strings.Index(selection, "select") < 0 {
+		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
@@ -74,7 +74,7 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 	if selection == "" {
 		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
-		if strings.Index(selection, "select") < 0 {
+		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
@@ -83,7 +83,7 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
-			if strings.Index(where, "where") < 0 {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
@@ -116,7 +116,7 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 	if selection == "" {
 		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
 	} else {
-		if strings.Index(selection, "select") < 0 {
+		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
@@ -125,7 +125,7 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
-			if strings.Index(where, "where") < 0 {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
@@ -154,7 +154,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("update {{ .TableName }}")
-	if strings.Index(section, "set") < 0 {
+	if !sqlxmodel.HasPrefixToken(section, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
 		sqlBuilder.WriteString(" ")
@@ -163,7 +163,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
-			if strings.Index(where, "where") < 0 {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
@@ -194,7 +194,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 	if section == "" {
 		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
-		if strings.Index(section, "set") < 0 {
+		if !sqlxmodel.HasPrefixToken(section, "select") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")
@@ -204,7 +204,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 	if where == "" {
 		sqlBuilder.WriteString(" where {{ FormattedField .PrimaryKey }}=:{{ .PrimaryKey }}")
 	} else {
-		if strings.Index(where, "where") < 0 {
+		if !sqlxmodel.HasPrefixToken(where, "where") {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
@@ -264,7 +264,7 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 	if where == "" {
 		sqlBuilder.WriteString(" where {{ FormattedField .PrimaryKey }}=:{{ .PrimaryKey }}")
 	} else {
-		if strings.Index(where, "where") < 0 {
+		if !sqlxmodel.HasPrefixToken(where, "where") {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
@@ -331,7 +331,7 @@ func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecCo
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
-			if strings.Index(where, "where") < 0 {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
@@ -364,7 +364,7 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
-			if strings.Index(where, "where") < 0 {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
