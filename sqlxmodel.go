@@ -186,11 +186,8 @@ func PrintSQL(v ...interface{}) {
 	}
 }
 
-func RelatedWith(ctx context.Context, db GetContext, model interface{}, field string, pk interface{}) error {
-	if pk == nil || reflect.ValueOf(pk).IsZero() {
-		return nil
-	}
-	rv := reflect.Indirect(reflect.ValueOf(model))
+func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, field string, pk interface{}) error {
+	rv := reflect.Indirect(modelRefv)
 	m := gReflectMapper.TryMap(rv.Type())
 	fi, ok := m.Names[field]
 	if !ok {
@@ -214,6 +211,49 @@ func RelatedWith(ctx context.Context, db GetContext, model interface{}, field st
 		fv.Set(reflect.Indirect(newfv))
 	}
 	return nil
+}
+
+func RelatedWith(ctx context.Context, db GetContext, model interface{}, field string, pk interface{}) error {
+	if pk == nil || reflect.ValueOf(pk).IsZero() {
+		return nil
+	}
+	return relatedWith(ctx, db, reflect.ValueOf(model), field, pk)
+}
+
+func relatedWithRef(ctx context.Context, db GetContext, modelRefv reflect.Value, field []string, ref ...string) error {
+	if len(ref) <= 0 || len(field) <= 0 {
+		return nil
+	}
+	modelRefv = reflect.Indirect(modelRefv)
+	rt := Deref(modelRefv.Type())
+	switch rt.Kind() {
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < modelRefv.Len(); i++ {
+			if err := relatedWithRef(ctx, db, modelRefv.Index(i), field, ref...); err != nil {
+				return err
+			}
+		}
+	case reflect.Struct:
+		pk := modelRefv.FieldByName(ref[0])
+		if pk.IsZero() {
+			return nil
+		}
+		if err := relatedWith(ctx, db, modelRefv, field[0], pk.Interface()); err != nil {
+			return err
+		}
+		if len(field) >= 1 && len(ref) >= 1 {
+			return relatedWithRef(ctx, db, modelRefv.FieldByName(field[0]), field[1:], ref[1:]...)
+		}
+	default:
+	}
+	return nil
+}
+
+func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field string, ref ...string) error {
+	if len(field) <= 0 || len(ref) <= 0 {
+		return nil
+	}
+	return relatedWithRef(ctx, db, reflect.ValueOf(model), strings.Split(field, "."), ref...)
 }
 
 func Truncate(ctx context.Context, db ExecContext, model interface{}) error {

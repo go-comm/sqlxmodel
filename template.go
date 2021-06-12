@@ -393,5 +393,14 @@ func (model *{{ .Name | Title }}) RelatedWith(ctx context.Context, db sqlxmodel.
 	return sqlxmodel.RelatedWith(ctx, db, model, field, pk)
 }
 
+// RelatedWithRef
+//
+// RelatedWithRef(ctx, db, "Creater", "CreaterID")
+//
+// !!!Don't Edit it!!!
+func (model *{{ .Name | Title }}) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
+	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
+}
+
 `
 }
