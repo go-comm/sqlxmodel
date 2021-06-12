@@ -230,7 +230,9 @@ func relatedWithRef(ctx context.Context, db GetContext, modelRefv reflect.Value,
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < modelRefv.Len(); i++ {
 			if err := relatedWithRef(ctx, db, modelRefv.Index(i), field, ref...); err != nil {
-				return err
+				if err != sql.ErrNoRows {
+					return err
+				}
 			}
 		}
 	case reflect.Struct:
