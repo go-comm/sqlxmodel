@@ -3,6 +3,7 @@ package sqlxmodel
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -193,6 +194,24 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 	if !ok {
 		return nil
 	}
+
+	var store map[string]reflect.Value
+	var storek string
+	if istore := ctx.Value("_sqlxmodel_store"); istore != nil {
+		if store = istore.(map[string]reflect.Value); store != nil {
+			storek = fmt.Sprintf("%s/%s/%v", fi.Type.String(), field, pk)
+			if storev, ok := store[storek]; ok {
+				fv := FieldByIndex(rv, fi.Index)
+				if fv.Kind() == storev.Kind() {
+					fv.Set(storev)
+				} else {
+					fv.Set(reflect.Indirect(storev))
+				}
+				return nil
+			}
+		}
+	}
+
 	newfv := reflect.New(Deref(fi.Type))
 	ifv, ok := newfv.Interface().(interface {
 		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
@@ -203,6 +222,9 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 	err := ifv.QueryFirstByPrimaryKey(ctx, db, ifv, "", pk)
 	if err != nil {
 		return err
+	}
+	if store != nil && len(storek) > 0 {
+		store[storek] = newfv
 	}
 	fv := FieldByIndex(rv, fi.Index)
 	if fv.Kind() == newfv.Kind() {
@@ -255,6 +277,7 @@ func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field
 	if len(field) <= 0 || len(ref) <= 0 {
 		return nil
 	}
+	ctx = context.WithValue(ctx, "_sqlxmodel_store", make(map[string]reflect.Value))
 	return relatedWithRef(ctx, db, reflect.ValueOf(model), strings.Split(field, "."), ref...)
 }
 

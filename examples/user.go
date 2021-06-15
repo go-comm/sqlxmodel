@@ -1,4 +1,4 @@
-package main
+package examples
 
 type Base struct {
 	ID         string `json:"id,omitempty" db:"id"`
@@ -19,8 +19,11 @@ type User struct {
 	Base
 	Name  string `json:"name,omitempty" db:"name"`
 	Email string `json:"email,omitempty" db:"email"`
+
+	RoleID int64 `json:"role_id,omitempty" db:"role_id"`
+	Role   *Role `json:"role,omitempty"`
 }
 
-func (u User) TableName() string {
+func (User) TableName() string {
 	return "t_user"
 }
