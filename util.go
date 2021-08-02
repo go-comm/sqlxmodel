@@ -24,49 +24,54 @@ func HasPrefixToken(s string, token string) bool {
 
 func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
 	cnt := strings.Count(section, "?")
-	if cnt <= 0 {
+	if cnt < 0 {
 		cnt = 0
 	}
-	pIn := strings.Index(where, "in")
-	if pIn < 0 {
+	if cnt >= len(args) {
 		return where, args
 	}
-	// find '?' after 'in'
-	pQ := pIn + 2
-	for ; pQ < len(where) && isSpace(where[pQ]); pQ++ {
-	}
-	if !(pQ < len(where) && where[pQ] == '?') {
-		return where, args
-	}
-	c := strings.Count(where[:pIn], "?")
-	c += cnt
-	if c >= len(args) {
-		return where, args
-	}
-	tv := reflect.TypeOf(args[c])
-	if !(args[c] == nil || tv.Kind() == reflect.Slice || tv.Kind() == reflect.Array) {
-		return where, args
-	}
-	rv := reflect.ValueOf(args[c])
-	var s strings.Builder
 	var nargs []interface{}
-	s.WriteString(where[:pQ])
-	nargs = append(nargs, args[:c]...)
-	if args[c] == nil || rv.Len() <= 0 {
-		s.WriteString("(NULL)")
-	} else {
-		s.WriteByte('(')
-		for i := 0; i < rv.Len(); i++ {
-			if i > 0 {
-				s.WriteByte(',')
-			}
-			s.WriteByte('?')
-			nargs = append(nargs, rv.Index(i).Interface())
+	var s strings.Builder
+	var off int = -1
+	nargs = append(nargs, args[:cnt]...)
+	args = args[cnt:]
+	for {
+		off = strings.IndexByte(where, '?')
+		if off < 0 {
+			s.WriteString(where)
+			nargs = append(nargs, args...)
+			break
 		}
-		s.WriteByte(')')
+		if len(args) <= 0 {
+			s.WriteString(where)
+			break
+		}
+		rv := reflect.ValueOf(args[0])
+		rt := rv.Type()
+		if !(args[0] == nil || rt.Kind() == reflect.Slice || rt.Kind() == reflect.Array) {
+			s.WriteString(where[:off+1])
+			nargs = append(nargs, args[0])
+			where = where[off+1:]
+			args = args[1:]
+			continue
+		}
+		if args[0] == nil || rv.Len() <= 0 {
+			s.WriteString("(NULL)")
+		} else {
+			s.WriteString(where[:off])
+			s.WriteByte('(')
+			for i := 0; i < rv.Len(); i++ {
+				if i > 0 {
+					s.WriteByte(',')
+				}
+				s.WriteByte('?')
+				nargs = append(nargs, rv.Index(i).Interface())
+			}
+			s.WriteByte(')')
+		}
+		where = where[off+1:]
+		args = args[1:]
 	}
-	s.WriteString(where[pQ+1:])
-	nargs = append(nargs, args[c+1:]...)
 	return s.String(), nargs
 }
 
