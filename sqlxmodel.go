@@ -65,6 +65,16 @@ type QueryRowsContext interface {
 	QueryRowsContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
+type DBContext interface {
+	NamedExecContext
+	SelectContext
+	GetContext
+	ExecContext
+	ExecContext
+	QueryRowContext
+	QueryRowsContext
+}
+
 type ModelFieldInfo struct {
 	FieldName       string
 	StructFieldName string
