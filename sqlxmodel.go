@@ -11,6 +11,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"text/template"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Model interface {
@@ -41,38 +43,57 @@ type Model interface {
 	RelatedWith(ctx context.Context, db GetContext, field string, v interface{}) error
 }
 
-type NamedExecContext interface {
-	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-}
-
-type SelectContext interface {
-	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-}
-
-type GetContext interface {
-	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-}
-
-type ExecContext interface {
-	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+type QueryContext interface {
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
 type QueryRowContext interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 }
 
-type QueryRowsContext interface {
-	QueryRowsContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+type ExecContext interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+}
+
+type NamedExecContext interface {
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+}
+
+type GetContext interface {
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
+
+type SelectContext interface {
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
+
+type PrepareNamedContext interface {
+	PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error)
+}
+
+type QueryRowContext interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+}
+
+type QueryxContext interface {
+	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+}
+
+type QueryRowxContext interface {
+	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
 }
 
 type DBContext interface {
-	NamedExecContext
-	SelectContext
-	GetContext
-	ExecContext
-	ExecContext
+	QueryContext
 	QueryRowContext
-	QueryRowsContext
+	ExecContext
+	NamedExecContext
+	GetContext
+	SelectContext
+	PrepareNamedContext
+	QueryRowContext
+	QueryxContext
+	QueryRowxContext
 }
 
 type ModelFieldInfo struct {
