@@ -72,7 +72,7 @@ type PrepareNamedContext interface {
 }
 
 type QueryxContext interface {
-	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
 }
 
 type QueryRowxContext interface {
