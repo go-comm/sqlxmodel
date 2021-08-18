@@ -71,10 +71,6 @@ type PrepareNamedContext interface {
 	PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error)
 }
 
-type QueryRowContext interface {
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
-}
-
 type QueryxContext interface {
 	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
@@ -85,7 +81,6 @@ type QueryRowxContext interface {
 
 type DBContext interface {
 	QueryContext
-	QueryRowContext
 	ExecContext
 	NamedExecContext
 	GetContext
