@@ -189,9 +189,9 @@ func (model Role) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_role")
 	if section == "" {
-		sqlBuilder.WriteString(" `name`=:name")
+		sqlBuilder.WriteString(" set `name`=:name")
 	} else {
-		if !sqlxmodel.HasPrefixToken(section, "select") {
+		if !sqlxmodel.HasPrefixToken(section, "set") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")
@@ -235,7 +235,7 @@ func (model Role) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name")
 	} else {
-		var formatColumn = func(s string) string {
+		formatColumn := func(s string) string {
 			var p int = -1
 			for i := 0; i < len(s); i++ {
 				if s[i] == '=' {
@@ -398,4 +398,3 @@ func (model *Role) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *Role) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
-

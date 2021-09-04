@@ -192,9 +192,9 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update {{ .TableName }}")
 	if section == "" {
-		sqlBuilder.WriteString(" {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
+		sqlBuilder.WriteString(" set {{ JoinExpr .Fields "${.FormattedField}=:${.Field}" .PrimaryKey }}")
 	} else {
-		if !sqlxmodel.HasPrefixToken(section, "select") {
+		if !sqlxmodel.HasPrefixToken(section, "set") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")

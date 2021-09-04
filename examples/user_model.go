@@ -189,9 +189,9 @@ func (model User) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_user")
 	if section == "" {
-		sqlBuilder.WriteString(" `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
+		sqlBuilder.WriteString(" set `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		if !sqlxmodel.HasPrefixToken(section, "select") {
+		if !sqlxmodel.HasPrefixToken(section, "set") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")
@@ -235,7 +235,7 @@ func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		var formatColumn = func(s string) string {
+		formatColumn := func(s string) string {
 			var p int = -1
 			for i := 0; i < len(s); i++ {
 				if s[i] == '=' {
@@ -398,4 +398,3 @@ func (model *User) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *User) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
-
