@@ -40,6 +40,8 @@ type Model interface {
 
 	Count(ctx context.Context, db QueryRowContext, whereAndArgs ...interface{}) (int64, error)
 
+	Has(ctx context.Context, db QueryRowContext, whereAndArgs ...interface{}) (bool, error)
+
 	RelatedWith(ctx context.Context, db GetContext, field string, v interface{}) error
 }
 

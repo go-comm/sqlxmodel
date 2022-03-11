@@ -359,8 +359,7 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select count(1) as c")
-	sqlBuilder.WriteString(" from {{ .TableName }}")
+	sqlBuilder.WriteString("select count(1) as c from {{ .TableName }}")
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
@@ -382,6 +381,48 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 	var c int64
 	err := row.Scan(&c)
 	return c, err
+}
+
+// Has has record
+//
+// Has(ctx, db, "id=1")
+//
+// SQL: select 1 from {{ .TableName }} where id=1 limit 1
+//
+// !!!Don't Edit it!!!
+func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (bool, error) {
+	var sqlBuilder strings.Builder
+	var args []interface{}
+	sqlBuilder.Grow(64)
+	sqlBuilder.WriteString("select 1 from {{ .TableName }}")
+	if len(whereAndArgs) > 0 {
+		args = whereAndArgs[1:]
+		if where, ok := whereAndArgs[0].(string); ok {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
+				sqlBuilder.WriteString(" where ")
+			} else {
+				sqlBuilder.WriteString(" ")
+			}
+			where, args = sqlxmodel.WithIn("", where, args...)
+			sqlBuilder.WriteString(where)
+		} else {
+			return false, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+		}
+	}
+	sqlBuilder.WriteString(" limit 1")
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
+	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
+	var c int64
+	err := row.Scan(&c)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return c == 1, nil
 }
 
 // RelatedWith

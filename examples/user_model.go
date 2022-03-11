@@ -235,7 +235,7 @@ func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		formatColumn := func(s string) string {
+		var formatColumn = func(s string) string {
 			var p int = -1
 			for i := 0; i < len(s); i++ {
 				if s[i] == '=' {
@@ -356,8 +356,7 @@ func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, where
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select count(1) as c")
-	sqlBuilder.WriteString(" from t_user")
+	sqlBuilder.WriteString("select count(1) as c from t_user")
 	if len(whereAndArgs) > 0 {
 		args = whereAndArgs[1:]
 		if where, ok := whereAndArgs[0].(string); ok {
@@ -381,6 +380,48 @@ func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, where
 	return c, err
 }
 
+// Has has record
+//
+// Has(ctx, db, "id=1")
+//
+// SQL: select 1 from t_user where id=1 limit 1
+//
+// !!!Don't Edit it!!!
+func (model User) Has(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (bool, error) {
+	var sqlBuilder strings.Builder
+	var args []interface{}
+	sqlBuilder.Grow(64)
+	sqlBuilder.WriteString("select 1 from t_user")
+	if len(whereAndArgs) > 0 {
+		args = whereAndArgs[1:]
+		if where, ok := whereAndArgs[0].(string); ok {
+			if !sqlxmodel.HasPrefixToken(where, "where") {
+				sqlBuilder.WriteString(" where ")
+			} else {
+				sqlBuilder.WriteString(" ")
+			}
+			where, args = sqlxmodel.WithIn("", where, args...)
+			sqlBuilder.WriteString(where)
+		} else {
+			return false, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+		}
+	}
+	sqlBuilder.WriteString(" limit 1")
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
+	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
+	var c int64
+	err := row.Scan(&c)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return c == 1, nil
+}
+
 // RelatedWith
 //
 // RelatedWith(ctx, db, "Creater", 1)
@@ -398,3 +439,4 @@ func (model *User) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *User) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
+
