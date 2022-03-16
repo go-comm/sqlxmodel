@@ -311,7 +311,7 @@ func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 	sqlBuilder.Grow(256)
 	sqlBuilder.WriteString("insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted) on duplicate key update")
 	if len(columns) == 0 {
-		sqlBuilder.WriteString(" :name=values(:name),:email=values(:email),:role_id=values(:role_id),:createtime=values(:createtime),:creater=values(:creater),:modifytime=values(:modifytime),:modifier=values(:modifier),:version=values(:version),:defunct=values(:defunct),:deleted=values(:deleted)")
+		sqlBuilder.WriteString(" `name`=values(`name)`,`email`=values(`email)`,`role_id`=values(`role_id)`,`createtime`=values(`createtime)`,`creater`=values(`creater)`,`modifytime`=values(`modifytime)`,`modifier`=values(`modifier)`,`version`=values(`version)`,`defunct`=values(`defunct)`,`deleted`=values(`deleted)`")
 	} else {
 		formatColumn := func(s string) string {
 			return "`" + s + "`=values(`" + s + "`)"
