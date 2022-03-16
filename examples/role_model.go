@@ -311,7 +311,7 @@ func (model Role) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 	sqlBuilder.Grow(256)
 	sqlBuilder.WriteString("insert into t_role(`id`,`name`)values(:id,:name) on duplicate key update")
 	if len(columns) == 0 {
-		sqlBuilder.WriteString(" `name`=values(`name)`")
+		sqlBuilder.WriteString(" `name`=values(`name`)")
 	} else {
 		formatColumn := func(s string) string {
 			return "`" + s + "`=values(`" + s + "`)"
