@@ -314,7 +314,7 @@ func (model Role) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 		sqlBuilder.WriteString(" :name=values(:name)")
 	} else {
 		formatColumn := func(s string) string {
-			return ":" + s + "=values(:" + s + ")"
+			return "`" + s + "`=values(`" + s + "`)"
 		}
 		sqlBuilder.WriteString(" ")
 		sqlBuilder.WriteString(formatColumn(columns[0]))

@@ -314,7 +314,7 @@ func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 		sqlBuilder.WriteString(" :name=values(:name),:email=values(:email),:role_id=values(:role_id),:createtime=values(:createtime),:creater=values(:creater),:modifytime=values(:modifytime),:modifier=values(:modifier),:version=values(:version),:defunct=values(:defunct),:deleted=values(:deleted)")
 	} else {
 		formatColumn := func(s string) string {
-			return ":" + s + "=values(:" + s + ")"
+			return "`" + s + "`=values(`" + s + "`)"
 		}
 		sqlBuilder.WriteString(" ")
 		sqlBuilder.WriteString(formatColumn(columns[0]))
@@ -331,7 +331,7 @@ func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 	}); ok {
 		e.BeforeInsert()
 	}
-
+	
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
@@ -475,3 +475,4 @@ func (model *User) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *User) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
+
