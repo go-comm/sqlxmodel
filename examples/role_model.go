@@ -235,7 +235,7 @@ func (model Role) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name")
 	} else {
-		var formatColumn = func(s string) string {
+		formatColumn := func(s string) string {
 			var p int = -1
 			for i := 0; i < len(s); i++ {
 				if s[i] == '=' {
@@ -297,6 +297,42 @@ func (model Role) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 		e.BeforeInsert()
 	}
 	return db.NamedExecContext(ctx, s, values)
+}
+
+// SaveOnMysql insert a record
+//
+// SaveOnMysql(ctx, db, &record)
+//
+// SQL: insert into t_role(`id`,`name`)values(:id,:name)
+//
+// !!!Don't Edit it!!!
+func (model Role) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, values interface{}) (sql.Result, error) {
+	var sqlBuilder strings.Builder
+	sqlBuilder.Grow(256)
+	sqlBuilder.WriteString("insert into t_role(`id`,`name`)values(:id,:name) on duplicate key update")
+	if len(columns) == 0 {
+		sqlBuilder.WriteString(" :name=values(:name)")
+	} else {
+		formatColumn := func(s string) string {
+			return ":" + s + "=values(:" + s + ")"
+		}
+		sqlBuilder.WriteString(" ")
+		sqlBuilder.WriteString(formatColumn(columns[0]))
+		for i := 1; i < len(columns); i++ {
+			sqlBuilder.WriteString(",")
+			sqlBuilder.WriteString(formatColumn(columns[i]))
+		}
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
+	if e, ok := values.(interface {
+		BeforeInsert()
+	}); ok {
+		e.BeforeInsert()
+	}
+	
+	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
 // DeleteByPrimaryKey delete one record by primary key

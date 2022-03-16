@@ -235,7 +235,7 @@ func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		var formatColumn = func(s string) string {
+		formatColumn := func(s string) string {
 			var p int = -1
 			for i := 0; i < len(s); i++ {
 				if s[i] == '=' {
@@ -297,6 +297,42 @@ func (model User) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 		e.BeforeInsert()
 	}
 	return db.NamedExecContext(ctx, s, values)
+}
+
+// SaveOnMysql insert a record
+//
+// SaveOnMysql(ctx, db, &record)
+//
+// SQL: insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)
+//
+// !!!Don't Edit it!!!
+func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, values interface{}) (sql.Result, error) {
+	var sqlBuilder strings.Builder
+	sqlBuilder.Grow(256)
+	sqlBuilder.WriteString("insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted) on duplicate key update")
+	if len(columns) == 0 {
+		sqlBuilder.WriteString(" :name=values(:name),:email=values(:email),:role_id=values(:role_id),:createtime=values(:createtime),:creater=values(:creater),:modifytime=values(:modifytime),:modifier=values(:modifier),:version=values(:version),:defunct=values(:defunct),:deleted=values(:deleted)")
+	} else {
+		formatColumn := func(s string) string {
+			return ":" + s + "=values(:" + s + ")"
+		}
+		sqlBuilder.WriteString(" ")
+		sqlBuilder.WriteString(formatColumn(columns[0]))
+		for i := 1; i < len(columns); i++ {
+			sqlBuilder.WriteString(",")
+			sqlBuilder.WriteString(formatColumn(columns[i]))
+		}
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(sqlBuilder.String())
+	}
+	if e, ok := values.(interface {
+		BeforeInsert()
+	}); ok {
+		e.BeforeInsert()
+	}
+
+	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
 // DeleteByPrimaryKey delete one record by primary key
@@ -439,4 +475,3 @@ func (model *User) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *User) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
-
