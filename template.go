@@ -314,7 +314,7 @@ func (model {{ .Name | Title }}) SaveOnMysql(ctx context.Context, db sqlxmodel.N
 	sqlBuilder.Grow(256)
 	sqlBuilder.WriteString("insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }}) on duplicate key update")
 	if len(columns) == 0 {
-		sqlBuilder.WriteString(" {{ JoinExpr .Fields "` + "`" + `${.Field}` + "`" + `=values(` + "`" + `${.Field})` + "`" + `" .PrimaryKey}}")
+		sqlBuilder.WriteString(" {{ JoinExpr .Fields "` + "`" + `${.Field}` + "`" + `=values(` + "`" + `${.Field}` + "`" + `)" .PrimaryKey}}")
 	} else {
 		formatColumn := func(s string) string {
 			return "` + "`" + `" + s + "` + "`" + `=values(` + "`" + `" + s + "` + "`" + `)"
