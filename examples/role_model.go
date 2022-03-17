@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -20,6 +21,7 @@ var (
 
 	_ = strings.Join
 	_ = fmt.Println
+	_ = log.Println
 	_ = reflect.ValueOf
 )
 
@@ -208,13 +210,19 @@ func (model Role) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext
 		}
 		sqlBuilder.WriteString(where)
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeUpdate() }:
+		vs.BeforeUpdate()
+	case []*Role:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeUpdate() }); ok {
+				n.BeforeUpdate()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
-	}
-	if e, ok := values.(interface {
-		BeforeUpdate()
-	}); ok {
-		e.BeforeUpdate()
 	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
@@ -268,13 +276,19 @@ func (model Role) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 		}
 		sqlBuilder.WriteString(where)
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeUpdate() }:
+		vs.BeforeUpdate()
+	case []*Role:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeUpdate() }); ok {
+				n.BeforeUpdate()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
-	}
-	if e, ok := values.(interface {
-		BeforeUpdate()
-	}); ok {
-		e.BeforeUpdate()
 	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
@@ -291,10 +305,11 @@ func (model Role) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 	switch vs := values.(type) {
 	case interface{ BeforeInsert() }:
 		vs.BeforeInsert()
-	case []interface{ BeforeInsert() }:
-		for _, vv := range vs {
-			if vv != nil {
-				vv.BeforeInsert()
+	case []*Role:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeInsert() }); ok {
+				n.BeforeInsert()
 			}
 		}
 	}
@@ -331,10 +346,11 @@ func (model Role) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 	switch vs := values.(type) {
 	case interface{ BeforeInsert() }:
 		vs.BeforeInsert()
-	case []interface{ BeforeInsert() }:
-		for _, vv := range vs {
-			if vv != nil {
-				vv.BeforeInsert()
+	case []*Role:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeInsert() }); ok {
+				n.BeforeInsert()
 			}
 		}
 	}
@@ -484,4 +500,3 @@ func (model *Role) RelatedWith(ctx context.Context, db sqlxmodel.GetContext, fie
 func (model *Role) RelatedWithRef(ctx context.Context, db sqlxmodel.GetContext, field string, ref ...string) error {
 	return sqlxmodel.RelatedWithRef(ctx, db, model, field, ref...)
 }
-

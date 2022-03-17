@@ -22,6 +22,40 @@ func HasPrefixToken(s string, token string) bool {
 	return strings.HasPrefix(s[i:], token)
 }
 
+func BeforeInsert(values interface{}) {
+	switch vs := values.(type) {
+	case interface{ BeforeInsert() }:
+		vs.BeforeInsert()
+	default:
+		rv := reflect.Indirect(reflect.ValueOf(vs))
+		if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+			for i := rv.Len() - 1; i >= 0; i-- {
+				e := rv.Index(i)
+				if n, ok := e.Interface().(interface{ BeforeInsert() }); ok {
+					n.BeforeInsert()
+				}
+			}
+		}
+	}
+}
+
+func BeforeUpdate(values interface{}) {
+	switch vs := values.(type) {
+	case interface{ BeforeUpdate() }:
+		vs.BeforeUpdate()
+	default:
+		rv := reflect.Indirect(reflect.ValueOf(vs))
+		if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+			for i := rv.Len() - 1; i >= 0; i-- {
+				e := rv.Index(i)
+				if n, ok := e.Interface().(interface{ BeforeUpdate() }); ok {
+					n.BeforeUpdate()
+				}
+			}
+		}
+	}
+}
+
 func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
 	cnt := strings.Count(section, "?")
 	if cnt < 0 {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -23,6 +24,7 @@ var (
 
 	_ = strings.Join
 	_ = fmt.Println
+	_ = log.Println
 	_ = reflect.ValueOf
 )
 
@@ -211,13 +213,19 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 		}
 		sqlBuilder.WriteString(where)
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeUpdate() }:
+		vs.BeforeUpdate()
+	case []*{{ .Name | Title }}:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeUpdate() }); ok {
+				n.BeforeUpdate()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
-	}
-	if e, ok := values.(interface {
-		BeforeUpdate()
-	}); ok {
-		e.BeforeUpdate()
 	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
@@ -271,13 +279,19 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 		}
 		sqlBuilder.WriteString(where)
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeUpdate() }:
+		vs.BeforeUpdate()
+	case []*{{ .Name | Title }}:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeUpdate() }); ok {
+				n.BeforeUpdate()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
-	}
-	if e, ok := values.(interface {
-		BeforeUpdate()
-	}); ok {
-		e.BeforeUpdate()
 	}
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
@@ -294,10 +308,11 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 	switch vs := values.(type) {
 	case interface{ BeforeInsert() }:
 		vs.BeforeInsert()
-	case []interface{ BeforeInsert() }:
-		for _, vv := range vs {
-			if vv != nil {
-				vv.BeforeInsert()
+	case []*{{ .Name | Title }}:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeInsert() }); ok {
+				n.BeforeInsert()
 			}
 		}
 	}
@@ -334,10 +349,11 @@ func (model {{ .Name | Title }}) SaveOnMysql(ctx context.Context, db sqlxmodel.N
 	switch vs := values.(type) {
 	case interface{ BeforeInsert() }:
 		vs.BeforeInsert()
-	case []interface{ BeforeInsert() }:
-		for _, vv := range vs {
-			if vv != nil {
-				vv.BeforeInsert()
+	case []*{{ .Name | Title }}:
+		for _, u := range vs {
+			var vv interface{} = u
+			if n, ok := vv.(interface{ BeforeInsert() }); ok {
+				n.BeforeInsert()
 			}
 		}
 	}
