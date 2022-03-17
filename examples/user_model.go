@@ -288,13 +288,18 @@ func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExec
 // !!!Don't Edit it!!!
 func (model User) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
 	s := "insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)"
+	switch vs := values.(type) {
+	case interface{ BeforeInsert() }:
+		vs.BeforeInsert()
+	case []interface{ BeforeInsert() }:
+		for _, vv := range vs {
+			if vv != nil {
+				vv.BeforeInsert()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(s)
-	}
-	if e, ok := values.(interface {
-		BeforeInsert()
-	}); ok {
-		e.BeforeInsert()
 	}
 	return db.NamedExecContext(ctx, s, values)
 }
@@ -323,15 +328,19 @@ func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 			sqlBuilder.WriteString(formatColumn(columns[i]))
 		}
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeInsert() }:
+		vs.BeforeInsert()
+	case []interface{ BeforeInsert() }:
+		for _, vv := range vs {
+			if vv != nil {
+				vv.BeforeInsert()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
-	if e, ok := values.(interface {
-		BeforeInsert()
-	}); ok {
-		e.BeforeInsert()
-	}
-	
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 

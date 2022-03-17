@@ -291,13 +291,18 @@ func (model {{ .Name | Title }}) NamedUpdateColumns(ctx context.Context, db sqlx
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
 	s := "insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
+	switch vs := values.(type) {
+	case interface{ BeforeInsert() }:
+		vs.BeforeInsert()
+	case []interface{ BeforeInsert() }:
+		for _, vv := range vs {
+			if vv != nil {
+				vv.BeforeInsert()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(s)
-	}
-	if e, ok := values.(interface {
-		BeforeInsert()
-	}); ok {
-		e.BeforeInsert()
 	}
 	return db.NamedExecContext(ctx, s, values)
 }
@@ -326,15 +331,19 @@ func (model {{ .Name | Title }}) SaveOnMysql(ctx context.Context, db sqlxmodel.N
 			sqlBuilder.WriteString(formatColumn(columns[i]))
 		}
 	}
+	switch vs := values.(type) {
+	case interface{ BeforeInsert() }:
+		vs.BeforeInsert()
+	case []interface{ BeforeInsert() }:
+		for _, vv := range vs {
+			if vv != nil {
+				vv.BeforeInsert()
+			}
+		}
+	}
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
-	if e, ok := values.(interface {
-		BeforeInsert()
-	}); ok {
-		e.BeforeInsert()
-	}
-	
 	return db.NamedExecContext(ctx, sqlBuilder.String(), values)
 }
 
