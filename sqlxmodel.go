@@ -3,7 +3,6 @@ package sqlxmodel
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -222,21 +221,19 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 	if !ok {
 		return nil
 	}
-
-	var store map[string]reflect.Value
-	var storek string
-	if istore := ctx.Value("_sqlxmodel_store"); istore != nil {
-		if store = istore.(map[string]reflect.Value); store != nil {
-			storek = fmt.Sprintf("%s/%s/%v", fi.Type.String(), field, pk)
-			if storev, ok := store[storek]; ok {
-				fv := FieldByIndex(rv, fi.Index)
-				if fv.Kind() == storev.Kind() {
-					fv.Set(storev)
-				} else {
-					fv.Set(reflect.Indirect(storev))
-				}
-				return nil
+	store := getStore(ctx, fi.Type)
+	if store != nil {
+		if vv, ok := store[pk]; ok {
+			if vv.NoRow {
+				return sql.ErrNoRows
 			}
+			fv := FieldByIndex(rv, fi.Index)
+			if fv.Kind() == vv.Value.Kind() {
+				fv.Set(vv.Value)
+			} else {
+				fv.Set(reflect.Indirect(vv.Value))
+			}
+			return nil
 		}
 	}
 
@@ -249,10 +246,18 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 	}
 	err := ifv.QueryFirstByPrimaryKey(ctx, db, ifv, "", pk)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			if store != nil {
+				vv := &ctxEntryVal{}
+				vv.NoRow = true
+				store[pk] = vv
+			}
+			return err
+		}
 		return err
 	}
-	if store != nil && len(storek) > 0 {
-		store[storek] = newfv
+	if store != nil {
+		store[pk] = &ctxEntryVal{false, newfv}
 	}
 	fv := FieldByIndex(rv, fi.Index)
 	if fv.Kind() == newfv.Kind() {
@@ -305,8 +310,60 @@ func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field
 	if len(field) <= 0 || len(ref) <= 0 {
 		return nil
 	}
-	ctx = context.WithValue(ctx, "_sqlxmodel_store", make(map[string]reflect.Value))
+	if !hasCtxEntry(ctx) {
+		ctx = WithContext(ctx)
+	}
 	return relatedWithRef(ctx, db, reflect.ValueOf(model), strings.Split(field, "."), ref...)
+}
+
+type ctxKey struct{ Key int }
+
+var ctxEntryKey = &ctxKey{1}
+
+type ctxEntryVal struct {
+	NoRow bool
+	Value reflect.Value
+}
+
+type ctxEntry struct {
+	Data map[reflect.Type]map[interface{}]*ctxEntryVal
+}
+
+func WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxEntryKey, &ctxEntry{})
+}
+
+func hasCtxEntry(ctx context.Context) bool {
+	ice := ctx.Value(ctxEntryKey)
+	if ice == nil {
+		return false
+	}
+	_, ok := ice.(*ctxEntry)
+	return ok
+}
+
+func getStore(ctx context.Context, tp reflect.Type) map[interface{}]*ctxEntryVal {
+	ice := ctx.Value(ctxEntryKey)
+	if ice == nil {
+		return nil
+	}
+	ce, ok := ice.(*ctxEntry)
+	if !ok {
+		return nil
+	}
+	var b map[interface{}]*ctxEntryVal
+	if ce.Data == nil {
+		ce.Data = make(map[reflect.Type]map[interface{}]*ctxEntryVal)
+		b = make(map[interface{}]*ctxEntryVal)
+		ce.Data[tp] = b
+	} else {
+		b = ce.Data[tp]
+		if b == nil {
+			b = make(map[interface{}]*ctxEntryVal)
+			ce.Data[tp] = b
+		}
+	}
+	return b
 }
 
 func Truncate(ctx context.Context, db ExecContext, model interface{}) error {
