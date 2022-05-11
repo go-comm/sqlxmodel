@@ -3,6 +3,7 @@ package sqlxmodel
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -222,6 +223,7 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 		return nil
 	}
 	store := getStore(ctx, fi.Type)
+
 	if store != nil {
 		if vv, ok := store[pk]; ok {
 			if vv.NoRow {
@@ -242,7 +244,7 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
 	})
 	if !ok {
-		return nil
+		return fmt.Errorf("sqlmodel: wrong model")
 	}
 	err := ifv.QueryFirstByPrimaryKey(ctx, db, ifv, "", pk)
 	if err != nil {
@@ -269,7 +271,7 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 }
 
 func RelatedWith(ctx context.Context, db GetContext, model interface{}, field string, pk interface{}) error {
-	if pk == nil || reflect.ValueOf(pk).IsZero() {
+	if model == nil || pk == nil || reflect.ValueOf(pk).IsZero() {
 		return nil
 	}
 	return relatedWith(ctx, db, reflect.ValueOf(model), field, pk)
@@ -307,13 +309,60 @@ func relatedWithRef(ctx context.Context, db GetContext, modelRefv reflect.Value,
 }
 
 func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field string, ref ...string) error {
-	if len(field) <= 0 || len(ref) <= 0 {
+	if model == nil || len(field) <= 0 || len(ref) <= 0 {
 		return nil
 	}
 	if !hasCtxEntry(ctx) {
 		ctx = WithContext(ctx)
 	}
 	return relatedWithRef(ctx, db, reflect.ValueOf(model), strings.Split(field, "."), ref...)
+}
+
+func GetByPK(ctx context.Context, db GetContext, model interface{}, pk interface{}) error {
+	if model == nil || pk == nil || reflect.ValueOf(pk).IsZero() {
+		return nil
+	}
+	rv := reflect.Indirect(reflect.ValueOf(model))
+	rt := rv.Type()
+
+	store := getStore(ctx, rt)
+
+	if store != nil {
+		if vv, ok := store[pk]; ok {
+			if vv.NoRow {
+				return sql.ErrNoRows
+			}
+			if rv.Kind() == vv.Value.Kind() {
+				rv.Set(vv.Value)
+			} else {
+				rv.Set(reflect.Indirect(vv.Value))
+			}
+			return nil
+		}
+	}
+
+	m, ok := model.(interface {
+		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
+	})
+	if !ok {
+		return fmt.Errorf("sqlmodel: wrong model")
+	}
+	err := m.QueryFirstByPrimaryKey(ctx, db, m, "", pk)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			if store != nil {
+				vv := &ctxEntryVal{}
+				vv.NoRow = true
+				store[pk] = vv
+			}
+			return nil
+		}
+		return err
+	}
+	if store != nil {
+		store[pk] = &ctxEntryVal{false, rv}
+	}
+	return nil
 }
 
 type ctxKey struct{ Key int }
