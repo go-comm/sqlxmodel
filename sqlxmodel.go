@@ -355,7 +355,6 @@ func GetByPK(ctx context.Context, db GetContext, model interface{}, pk interface
 				vv.NoRow = true
 				store[pk] = vv
 			}
-			return nil
 		}
 		return err
 	}
