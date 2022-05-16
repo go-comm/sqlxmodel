@@ -3,7 +3,8 @@ package sqlxmodel
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
+	"io"
 	"log"
 	"os"
 	"reflect"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 )
+
+var errInvalidModel = errors.New("model invalid")
 
 type Model interface {
 	PrimaryKey() string
@@ -170,7 +173,7 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 	return mi
 }
 
-func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
+func (m *SqlxModel) WriteTo(e interface{}, w io.Writer) error {
 	mi := m.TryModel(e)
 	tpl, err := template.New("").
 		Funcs(template.FuncMap{
@@ -184,11 +187,15 @@ func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 	if err != nil {
 		return err
 	}
+	return tpl.Execute(w, mi)
+}
+
+func (m *SqlxModel) WriteToFile(e interface{}, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	return tpl.Execute(f, mi)
+	return m.WriteTo(e, f)
 }
 
 var (
@@ -244,7 +251,7 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
 	})
 	if !ok {
-		return fmt.Errorf("sqlmodel: wrong model")
+		return errInvalidModel
 	}
 	err := ifv.QueryFirstByPrimaryKey(ctx, db, ifv, "", pk)
 	if err != nil {
@@ -271,8 +278,11 @@ func relatedWith(ctx context.Context, db GetContext, modelRefv reflect.Value, fi
 }
 
 func RelatedWith(ctx context.Context, db GetContext, model interface{}, field string, pk interface{}) error {
-	if model == nil || pk == nil || reflect.ValueOf(pk).IsZero() {
-		return nil
+	if model == nil {
+		return errInvalidModel
+	}
+	if pk == nil || reflect.ValueOf(pk).IsZero() {
+		return sql.ErrNoRows
 	}
 	return relatedWith(ctx, db, reflect.ValueOf(model), field, pk)
 }
@@ -309,7 +319,10 @@ func relatedWithRef(ctx context.Context, db GetContext, modelRefv reflect.Value,
 }
 
 func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field string, ref ...string) error {
-	if model == nil || len(field) <= 0 || len(ref) <= 0 {
+	if model == nil {
+		return errInvalidModel
+	}
+	if len(field) <= 0 || len(ref) <= 0 {
 		return nil
 	}
 	if !hasCtxEntry(ctx) {
@@ -319,8 +332,11 @@ func RelatedWithRef(ctx context.Context, db GetContext, model interface{}, field
 }
 
 func GetByPK(ctx context.Context, db GetContext, model interface{}, pk interface{}) error {
-	if model == nil || pk == nil || reflect.ValueOf(pk).IsZero() {
-		return nil
+	if model == nil {
+		return errInvalidModel
+	}
+	if pk == nil || reflect.ValueOf(pk).IsZero() {
+		return sql.ErrNoRows
 	}
 	rv := reflect.Indirect(reflect.ValueOf(model))
 	rt := rv.Type()
@@ -345,7 +361,7 @@ func GetByPK(ctx context.Context, db GetContext, model interface{}, pk interface
 		QueryFirstByPrimaryKey(ctx context.Context, db GetContext, dest interface{}, selection string, pk interface{}) error
 	})
 	if !ok {
-		return fmt.Errorf("sqlmodel: wrong model")
+		return errInvalidModel
 	}
 	err := m.QueryFirstByPrimaryKey(ctx, db, m, "", pk)
 	if err != nil {
