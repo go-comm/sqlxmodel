@@ -1,7 +1,7 @@
 package writer
 
 var tplHeader = `// !!!Don't Edit it!!!
-package examples
+package {{ .PackageName }}
 
 import (
 	"context"
