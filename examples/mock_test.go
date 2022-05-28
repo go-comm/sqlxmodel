@@ -44,13 +44,7 @@ func init() {
 func TestCreateModel(t *testing.T) {
 	m := sqlxmodel.NewSqlxModel("db")
 
-	if err := m.WriteToFile(&User{}, "user_model.go"); err != nil {
-		log.Println(err)
-	}
-
-	if err := m.WriteToFile(&Role{}, "role_model.go"); err != nil {
-		log.Println(err)
-	}
+	m.WriteToFile("model.go", &User{}, &Role{})
 }
 
 func ExampleGetUser() {

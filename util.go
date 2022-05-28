@@ -1,6 +1,7 @@
 package sqlxmodel
 
 import (
+	"context"
 	"reflect"
 	"strings"
 	"text/template"
@@ -22,38 +23,68 @@ func HasPrefixToken(s string, token string) bool {
 	return strings.HasPrefix(s[i:], token)
 }
 
-func BeforeInsert(values interface{}) {
+func beforeInsert(ctx context.Context, values interface{}, deepth int) error {
+	var err error
 	switch vs := values.(type) {
 	case interface{ BeforeInsert() }:
 		vs.BeforeInsert()
+	case interface{ BeforeInsert() error }:
+		err = vs.BeforeInsert()
+	case interface{ BeforeInsert(ctx context.Context) }:
+		vs.BeforeInsert(ctx)
+	case interface {
+		BeforeInsert(ctx context.Context) error
+	}:
+		err = vs.BeforeInsert(ctx)
 	default:
-		rv := reflect.Indirect(reflect.ValueOf(vs))
-		if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
-			for i := rv.Len() - 1; i >= 0; i-- {
-				e := rv.Index(i)
-				if n, ok := e.Interface().(interface{ BeforeInsert() }); ok {
-					n.BeforeInsert()
+		if deepth > 1 {
+			rv := reflect.Indirect(reflect.ValueOf(vs))
+			if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+				for i := rv.Len() - 1; i >= 0; i-- {
+					if err = beforeInsert(ctx, rv.Index(i).Interface(), deepth-1); err != nil {
+						return err
+					}
 				}
 			}
 		}
 	}
+	return err
 }
 
-func BeforeUpdate(values interface{}) {
+func BeforeInsert(ctx context.Context, values interface{}) error {
+	return beforeInsert(ctx, values, 2)
+}
+
+func beforeUpdate(ctx context.Context, values interface{}, deepth int) error {
+	var err error
 	switch vs := values.(type) {
 	case interface{ BeforeUpdate() }:
 		vs.BeforeUpdate()
+	case interface{ BeforeUpdate() error }:
+		err = vs.BeforeUpdate()
+	case interface{ BeforeUpdate(ctx context.Context) }:
+		vs.BeforeUpdate(ctx)
+	case interface {
+		BeforeUpdate(ctx context.Context) error
+	}:
+		err = vs.BeforeUpdate(ctx)
 	default:
-		rv := reflect.Indirect(reflect.ValueOf(vs))
-		if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
-			for i := rv.Len() - 1; i >= 0; i-- {
-				e := rv.Index(i)
-				if n, ok := e.Interface().(interface{ BeforeUpdate() }); ok {
-					n.BeforeUpdate()
+		if deepth > 1 {
+			rv := reflect.Indirect(reflect.ValueOf(vs))
+			if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+				for i := rv.Len() - 1; i >= 0; i-- {
+					if err = beforeUpdate(ctx, rv.Index(i).Interface(), deepth-1); err != nil {
+						return err
+					}
 				}
 			}
 		}
 	}
+	return err
+}
+
+func BeforeUpdate(ctx context.Context, values interface{}) error {
+	return beforeUpdate(ctx, values, 2)
 }
 
 func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
