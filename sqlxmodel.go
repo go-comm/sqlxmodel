@@ -85,6 +85,10 @@ type QueryRowxContext interface {
 	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
 }
 
+type NamedQueryContext interface {
+	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*sqlx.Rows, error)
+}
+
 type DBContext interface {
 	QueryContext
 	ExecContext
@@ -95,6 +99,7 @@ type DBContext interface {
 	QueryRowContext
 	QueryxContext
 	QueryRowxContext
+	NamedQueryContext
 }
 
 type ModelFieldInfo struct {
