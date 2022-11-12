@@ -23,6 +23,61 @@ func HasPrefixToken(s string, token string) bool {
 	return strings.HasPrefix(s[i:], token)
 }
 
+func HasAnyPrefixToken(s string, token ...string) bool {
+	i := 0
+	for ; i < len(s) && isSpace(s[i]); i++ {
+	}
+	switch len(token) {
+	case 0:
+		return false
+	case 1:
+		return strings.HasPrefix(s[i:], token[0])
+	case 2:
+		return strings.HasPrefix(s[i:], token[0]) || strings.HasPrefix(s[i:], token[1])
+	case 3:
+		return strings.HasPrefix(s[i:], token[0]) || strings.HasPrefix(s[i:], token[1]) || strings.HasPrefix(s[i:], token[2])
+	}
+	for _, tk := range token {
+		if strings.HasPrefix(s[i:], tk) {
+			return true
+		}
+	}
+	return false
+}
+
+func IfClauseAppendWhere(s string) bool {
+	i := 0
+	for ; i < len(s) && isSpace(s[i]); i++ {
+	}
+	s = s[i:]
+	if len(s) <= 0 {
+		return false
+	}
+	if len(s) < 5 {
+		return true
+	}
+	c := s[0]
+	possible := c == 'w' || c == 'o' || c == 'j' || c == 'l' || c == 'r' || c == 'i' || c == 'h'
+	if !possible {
+		return true
+	}
+	i = 0
+	for ; i < len(s) && !isSpace(s[i]); i++ {
+		if i > 6 { // out of having
+			return true
+		}
+	}
+	token := s[:i]
+	possible = token == "where" || token == "WHERE" ||
+		token == "order" || token == "ORDER" ||
+		token == "join" || token == "JOIN" ||
+		token == "left" || token == "LEFT" ||
+		token == "right" || token == "RIGHT" ||
+		token == "inner" || token == "INNER" ||
+		token == "having" || token == "HAVING"
+	return !possible
+}
+
 func beforeInsert(ctx context.Context, values interface{}, deepth int) error {
 	var err error
 	switch vs := values.(type) {
@@ -87,43 +142,42 @@ func BeforeUpdate(ctx context.Context, values interface{}) error {
 	return beforeUpdate(ctx, values, 2)
 }
 
-func WithIn(section string, where string, args ...interface{}) (string, []interface{}) {
-	cnt := strings.Count(section, "?")
-	if cnt < 0 {
-		cnt = 0
+func WithIn(clause string, args []interface{}, offset int) (string, []interface{}) {
+	if len(args) <= 0 || len(args) <= offset {
+		return clause, args
 	}
-	if cnt >= len(args) {
-		return where, args
+	if offset < 0 {
+		offset = 0
 	}
 	var nargs []interface{}
 	var s strings.Builder
 	var off int = -1
-	nargs = append(nargs, args[:cnt]...)
-	args = args[cnt:]
+	nargs = append(nargs, args[:offset]...)
+	args = args[offset:]
 	for {
-		off = strings.IndexByte(where, '?')
+		off = strings.IndexByte(clause, '?')
 		if off < 0 {
-			s.WriteString(where)
+			s.WriteString(clause)
 			nargs = append(nargs, args...)
 			break
 		}
 		if len(args) <= 0 {
-			s.WriteString(where)
+			s.WriteString(clause)
 			break
 		}
 		rv := reflect.ValueOf(args[0])
 		rt := rv.Type()
 		if !(args[0] == nil || rt.Kind() == reflect.Slice || rt.Kind() == reflect.Array) {
-			s.WriteString(where[:off+1])
+			s.WriteString(clause[:off+1])
 			nargs = append(nargs, args[0])
-			where = where[off+1:]
+			clause = clause[off+1:]
 			args = args[1:]
 			continue
 		}
 		if args[0] == nil || rv.Len() <= 0 {
 			s.WriteString("(NULL)")
 		} else {
-			s.WriteString(where[:off])
+			s.WriteString(clause[:off])
 			s.WriteByte('(')
 			for i := 0; i < rv.Len(); i++ {
 				if i > 0 {
@@ -134,10 +188,24 @@ func WithIn(section string, where string, args ...interface{}) (string, []interf
 			}
 			s.WriteByte(')')
 		}
-		where = where[off+1:]
+		clause = clause[off+1:]
 		args = args[1:]
 	}
 	return s.String(), nargs
+}
+
+func FormatSetClause(s string) string {
+	var p int = -1
+	for i := 0; i < len(s); i++ {
+		if s[i] == '=' {
+			p = i
+			break
+		}
+	}
+	if p < 0 {
+		return "`" + s + "`=:" + s
+	}
+	return s
 }
 
 func JoinSlice(x interface{}, args ...interface{}) []interface{} {

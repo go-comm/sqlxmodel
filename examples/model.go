@@ -66,7 +66,7 @@ func (model User) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 // SQL: select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted` from t_user where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -79,18 +79,18 @@ func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from t_user")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -108,7 +108,7 @@ func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 // SQL: select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted` from t_user where id>? order by id desc
 //
 // !!!Don't Edit it!!!
-func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -121,18 +121,18 @@ func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from t_user")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -148,29 +148,29 @@ func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 // SQL: update t_user set `name`=?,`email`=?,`role_id`=?,`createtime`=?,`creater`=?,`modifytime`=?,`modifier`=?,`version`=?,`defunct`=?,`deleted`=? where id=?
 //
 // !!!Don't Edit it!!!
-func (model User) Update(ctx context.Context, db sqlxmodel.ExecContext, section string, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model User) Update(ctx context.Context, db sqlxmodel.ExecContext, set string, clauseAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("update t_user")
-	if !sqlxmodel.HasPrefixToken(section, "set") {
+	if !sqlxmodel.HasPrefixToken(set, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
 		sqlBuilder.WriteString(" ")
 	}
-	sqlBuilder.WriteString(section)
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	sqlBuilder.WriteString(set)
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(section, where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, strings.Count(set, "?"))
+			sqlBuilder.WriteString(clause)
 		} else {
-			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -186,29 +186,29 @@ func (model User) Update(ctx context.Context, db sqlxmodel.ExecContext, section 
 // SQL: update t_user set `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model User) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, section string, where string, values interface{}) (sql.Result, error) {
+func (model User) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, set string, clause string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_user")
-	if section == "" {
+	if set == "" {
 		sqlBuilder.WriteString(" set `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		if !sqlxmodel.HasPrefixToken(section, "set") {
+		if !sqlxmodel.HasPrefixToken(set, "set") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(section)
+		sqlBuilder.WriteString(set)
 	}
-	if where == "" {
+	if clause == "" {
 		sqlBuilder.WriteString(" where `id`=:id")
 	} else {
-		if !sqlxmodel.HasPrefixToken(where, "where") {
+		if sqlxmodel.IfClauseAppendWhere(clause) {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(where)
+		sqlBuilder.WriteString(clause)
 	}
 	if err := sqlxmodel.BeforeUpdate(ctx, values); err != nil {
 		return nil, err
@@ -228,45 +228,29 @@ func (model User) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext
 // columns: []string{"id","version=version+1"} is also supported.
 //
 // !!!Don't Edit it!!!
-func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
+func (model User) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, clause string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_user set")
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name,`email`=:email,`role_id`=:role_id,`createtime`=:createtime,`creater`=:creater,`modifytime`=:modifytime,`modifier`=:modifier,`version`=:version,`defunct`=:defunct,`deleted`=:deleted")
 	} else {
-		formatColumn := func(s string) string {
-			var p int = -1
-			for i := 0; i < len(s); i++ {
-				if s[i] == '=' {
-					p = i
-					break
-				}
-			}
-			if p < 0 {
-				return "`" + s + "`=:" + s
-			}
-			if p >= len(s)-1 || p <= 0 {
-				return ""
-			}
-			return s
-		}
 		sqlBuilder.WriteString(" ")
-		sqlBuilder.WriteString(formatColumn(columns[0]))
+		sqlBuilder.WriteString(sqlxmodel.FormatSetClause(columns[0]))
 		for i := 1; i < len(columns); i++ {
 			sqlBuilder.WriteString(",")
-			sqlBuilder.WriteString(formatColumn(columns[i]))
+			sqlBuilder.WriteString(sqlxmodel.FormatSetClause(columns[i]))
 		}
 	}
-	if where == "" {
+	if clause == "" {
 		sqlBuilder.WriteString(" where `id`=:id")
 	} else {
-		if !sqlxmodel.HasPrefixToken(where, "where") {
+		if sqlxmodel.IfClauseAppendWhere(clause) {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(where)
+		sqlBuilder.WriteString(clause)
 	}
 	if err := sqlxmodel.BeforeUpdate(ctx, values); err != nil {
 		return nil, err
@@ -350,22 +334,22 @@ func (model User) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecConte
 // SQL: delete from t_user where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model User) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model User) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.WriteString("delete from t_user")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -381,23 +365,23 @@ func (model User) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAnd
 // SQL: select count(1) as c from t_user
 //
 // !!!Don't Edit it!!!
-func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (int64, error) {
+func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select count(1) as c from t_user")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return 0, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return 0, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -416,23 +400,23 @@ func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, where
 // SQL: select 1 from t_user where id=1 limit 1
 //
 // !!!Don't Edit it!!!
-func (model User) Has(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (bool, error) {
+func (model User) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select 1 from t_user")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return false, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return false, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	sqlBuilder.WriteString(" limit 1")
@@ -510,7 +494,7 @@ func (model Role) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 // SQL: select `id`,`name` from t_role where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -523,18 +507,18 @@ func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from t_role")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -552,7 +536,7 @@ func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 // SQL: select `id`,`name` from t_role where id>? order by id desc
 //
 // !!!Don't Edit it!!!
-func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -565,18 +549,18 @@ func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from t_role")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -592,29 +576,29 @@ func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 // SQL: update t_role set `name`=? where id=?
 //
 // !!!Don't Edit it!!!
-func (model Role) Update(ctx context.Context, db sqlxmodel.ExecContext, section string, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model Role) Update(ctx context.Context, db sqlxmodel.ExecContext, set string, clauseAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("update t_role")
-	if !sqlxmodel.HasPrefixToken(section, "set") {
+	if !sqlxmodel.HasPrefixToken(set, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
 		sqlBuilder.WriteString(" ")
 	}
-	sqlBuilder.WriteString(section)
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	sqlBuilder.WriteString(set)
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn(section, where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, strings.Count(set, "?"))
+			sqlBuilder.WriteString(clause)
 		} else {
-			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -630,29 +614,29 @@ func (model Role) Update(ctx context.Context, db sqlxmodel.ExecContext, section 
 // SQL: update t_role set `name`=:name where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model Role) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, section string, where string, values interface{}) (sql.Result, error) {
+func (model Role) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext, set string, clause string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_role")
-	if section == "" {
+	if set == "" {
 		sqlBuilder.WriteString(" set `name`=:name")
 	} else {
-		if !sqlxmodel.HasPrefixToken(section, "set") {
+		if !sqlxmodel.HasPrefixToken(set, "set") {
 			sqlBuilder.WriteString(" set ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(section)
+		sqlBuilder.WriteString(set)
 	}
-	if where == "" {
+	if clause == "" {
 		sqlBuilder.WriteString(" where `id`=:id")
 	} else {
-		if !sqlxmodel.HasPrefixToken(where, "where") {
+		if sqlxmodel.IfClauseAppendWhere(clause) {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(where)
+		sqlBuilder.WriteString(clause)
 	}
 	if err := sqlxmodel.BeforeUpdate(ctx, values); err != nil {
 		return nil, err
@@ -672,45 +656,29 @@ func (model Role) NamedUpdate(ctx context.Context, db sqlxmodel.NamedExecContext
 // columns: []string{"id","version=version+1"} is also supported.
 //
 // !!!Don't Edit it!!!
-func (model Role) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, where string, values interface{}) (sql.Result, error) {
+func (model Role) NamedUpdateColumns(ctx context.Context, db sqlxmodel.NamedExecContext, columns []string, clause string, values interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	sqlBuilder.WriteString("update t_role set")
 	if len(columns) == 0 {
 		sqlBuilder.WriteString(" `name`=:name")
 	} else {
-		formatColumn := func(s string) string {
-			var p int = -1
-			for i := 0; i < len(s); i++ {
-				if s[i] == '=' {
-					p = i
-					break
-				}
-			}
-			if p < 0 {
-				return "`" + s + "`=:" + s
-			}
-			if p >= len(s)-1 || p <= 0 {
-				return ""
-			}
-			return s
-		}
 		sqlBuilder.WriteString(" ")
-		sqlBuilder.WriteString(formatColumn(columns[0]))
+		sqlBuilder.WriteString(sqlxmodel.FormatSetClause(columns[0]))
 		for i := 1; i < len(columns); i++ {
 			sqlBuilder.WriteString(",")
-			sqlBuilder.WriteString(formatColumn(columns[i]))
+			sqlBuilder.WriteString(sqlxmodel.FormatSetClause(columns[i]))
 		}
 	}
-	if where == "" {
+	if clause == "" {
 		sqlBuilder.WriteString(" where `id`=:id")
 	} else {
-		if !sqlxmodel.HasPrefixToken(where, "where") {
+		if sqlxmodel.IfClauseAppendWhere(clause) {
 			sqlBuilder.WriteString(" where ")
 		} else {
 			sqlBuilder.WriteString(" ")
 		}
-		sqlBuilder.WriteString(where)
+		sqlBuilder.WriteString(clause)
 	}
 	if err := sqlxmodel.BeforeUpdate(ctx, values); err != nil {
 		return nil, err
@@ -794,22 +762,22 @@ func (model Role) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecConte
 // SQL: delete from t_role where `id`=?
 //
 // !!!Don't Edit it!!!
-func (model Role) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model Role) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.WriteString("delete from t_role")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -825,23 +793,23 @@ func (model Role) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAnd
 // SQL: select count(1) as c from t_role
 //
 // !!!Don't Edit it!!!
-func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (int64, error) {
+func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select count(1) as c from t_role")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return 0, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return 0, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -860,23 +828,23 @@ func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, where
 // SQL: select 1 from t_role where id=1 limit 1
 //
 // !!!Don't Edit it!!!
-func (model Role) Has(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (bool, error) {
+func (model Role) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select 1 from t_role")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return false, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return false, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	sqlBuilder.WriteString(" limit 1")

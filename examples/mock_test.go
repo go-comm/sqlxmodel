@@ -60,7 +60,7 @@ func ExampleGetUser() {
 
 func ExampleQueryUsers() {
 	var users []User
-	if err := UserModel.QueryList(context.TODO(), mockdb, &users, ""); err != nil {
+	if err := UserModel.QueryList(context.TODO(), mockdb, &users, "", "id>10"); err != nil {
 		log.Fatalln(err)
 	}
 	for _, u := range users {

@@ -39,7 +39,7 @@ var fnQueryFirst = `
 // SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -52,18 +52,18 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from {{ .TableName }}")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -83,7 +83,7 @@ var fnQueryList = `
 // SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, whereAndArgs ...interface{}) error {
+func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(128)
@@ -96,18 +96,18 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 		sqlBuilder.WriteString(selection)
 	}
 	sqlBuilder.WriteString(" from {{ .TableName }}")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -125,23 +125,23 @@ var fnCount = `
 // SQL: select count(1) as c from {{ .TableName }}
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (int64, error) {
+func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select count(1) as c from {{ .TableName }}")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return 0, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return 0, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
@@ -162,23 +162,23 @@ var fnHas = `
 // SQL: select 1 from {{ .TableName }} where id=1 limit 1
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowContext, whereAndArgs ...interface{}) (bool, error) {
+func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
 	sqlBuilder.WriteString("select 1 from {{ .TableName }}")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return false, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return false, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	sqlBuilder.WriteString(" limit 1")

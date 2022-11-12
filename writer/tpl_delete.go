@@ -23,22 +23,22 @@ func (model {{ .Name | Title }}) DeleteByPrimaryKey(ctx context.Context, db sqlx
 // SQL: delete from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
-func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecContext, whereAndArgs ...interface{}) (sql.Result, error) {
+func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAndArgs ...interface{}) (sql.Result, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.WriteString("delete from {{ .TableName }}")
-	if len(whereAndArgs) > 0 {
-		args = whereAndArgs[1:]
-		if where, ok := whereAndArgs[0].(string); ok {
-			if !sqlxmodel.HasPrefixToken(where, "where") {
+	if len(clauseAndArgs) > 0 {
+		args = clauseAndArgs[1:]
+		if clause, ok := clauseAndArgs[0].(string); ok {
+			if sqlxmodel.IfClauseAppendWhere(clause) {
 				sqlBuilder.WriteString(" where ")
 			} else {
 				sqlBuilder.WriteString(" ")
 			}
-			where, args = sqlxmodel.WithIn("", where, args...)
-			sqlBuilder.WriteString(where)
+			clause, args = sqlxmodel.WithIn(clause, args, 0)
+			sqlBuilder.WriteString(clause)
 		} else {
-			return nil, fmt.Errorf("expect string, but type %T", whereAndArgs[0])
+			return nil, fmt.Errorf("expect string, but type %T", clauseAndArgs[0])
 		}
 	}
 	if sqlxmodel.ShowSQL() {
