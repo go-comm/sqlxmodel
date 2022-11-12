@@ -36,21 +36,21 @@ var UserModel = new(User)
 //
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
-// SQL: select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted` from t_user where `id`=?
+// SQL: select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted from t_user where A.id=?
 //
 // !!!Don't Edit it!!!
 func (model User) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`")
+		sqlBuilder.WriteString("select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_user where `id`=?")
+	sqlBuilder.WriteString(" from t_user A where A.id=?")
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
@@ -63,7 +63,7 @@ func (model User) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 //
 // QueryFirst(ctx, db, &record, "", "where `id`=?", 100)
 //
-// SQL: select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted` from t_user where `id`=?
+// SQL: select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted from t_user A where A.id=?
 //
 // !!!Don't Edit it!!!
 func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -71,14 +71,14 @@ func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`")
+		sqlBuilder.WriteString("select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_user")
+	sqlBuilder.WriteString(" from t_user A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -105,7 +105,7 @@ func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 //
 // QueryList(ctx, db, &records, "", "where id>? order by id desc", 100)
 //
-// SQL: select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted` from t_user where id>? order by id desc
+// SQL: select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted from t_user A where id>? order by A.id desc
 //
 // !!!Don't Edit it!!!
 func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -113,14 +113,14 @@ func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`")
+		sqlBuilder.WriteString("select A.name,A.email,A.role_id,A.id,A.createtime,A.creater,A.modifytime,A.modifier,A.version,A.defunct,A.deleted")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_user")
+	sqlBuilder.WriteString(" from t_user A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -152,7 +152,7 @@ func (model User) Update(ctx context.Context, db sqlxmodel.ExecContext, set stri
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("update t_user")
+	sqlBuilder.WriteString("update t_user A")
 	if !sqlxmodel.HasPrefixToken(set, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
@@ -362,14 +362,14 @@ func (model User) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAn
 //
 // Count(ctx, db, "")
 //
-// SQL: select count(1) as c from t_user
+// SQL: select count(1) as c from t_user A
 //
 // !!!Don't Edit it!!!
 func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select count(1) as c from t_user")
+	sqlBuilder.WriteString("select count(1) as c from t_user A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -397,14 +397,14 @@ func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, claus
 //
 // Has(ctx, db, "id=1")
 //
-// SQL: select 1 from t_user where id=1 limit 1
+// SQL: select 1 from t_user A where id=1 limit 1
 //
 // !!!Don't Edit it!!!
 func (model User) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select 1 from t_user")
+	sqlBuilder.WriteString("select 1 from t_user A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -464,21 +464,21 @@ var RoleModel = new(Role)
 //
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
-// SQL: select `id`,`name` from t_role where `id`=?
+// SQL: select A.id,A.name from t_role where A.id=?
 //
 // !!!Don't Edit it!!!
 func (model Role) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `id`,`name`")
+		sqlBuilder.WriteString("select A.id,A.name")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_role where `id`=?")
+	sqlBuilder.WriteString(" from t_role A where A.id=?")
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
@@ -491,7 +491,7 @@ func (model Role) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 //
 // QueryFirst(ctx, db, &record, "", "where `id`=?", 100)
 //
-// SQL: select `id`,`name` from t_role where `id`=?
+// SQL: select A.id,A.name from t_role A where A.id=?
 //
 // !!!Don't Edit it!!!
 func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -499,14 +499,14 @@ func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `id`,`name`")
+		sqlBuilder.WriteString("select A.id,A.name")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_role")
+	sqlBuilder.WriteString(" from t_role A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -533,7 +533,7 @@ func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 //
 // QueryList(ctx, db, &records, "", "where id>? order by id desc", 100)
 //
-// SQL: select `id`,`name` from t_role where id>? order by id desc
+// SQL: select A.id,A.name from t_role A where id>? order by A.id desc
 //
 // !!!Don't Edit it!!!
 func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -541,14 +541,14 @@ func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select `id`,`name`")
+		sqlBuilder.WriteString("select A.id,A.name")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from t_role")
+	sqlBuilder.WriteString(" from t_role A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -580,7 +580,7 @@ func (model Role) Update(ctx context.Context, db sqlxmodel.ExecContext, set stri
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("update t_role")
+	sqlBuilder.WriteString("update t_role A")
 	if !sqlxmodel.HasPrefixToken(set, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
@@ -790,14 +790,14 @@ func (model Role) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAn
 //
 // Count(ctx, db, "")
 //
-// SQL: select count(1) as c from t_role
+// SQL: select count(1) as c from t_role A
 //
 // !!!Don't Edit it!!!
 func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select count(1) as c from t_role")
+	sqlBuilder.WriteString("select count(1) as c from t_role A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -825,14 +825,14 @@ func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, claus
 //
 // Has(ctx, db, "id=1")
 //
-// SQL: select 1 from t_role where id=1 limit 1
+// SQL: select 1 from t_role A where id=1 limit 1
 //
 // !!!Don't Edit it!!!
 func (model Role) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select 1 from t_role")
+	sqlBuilder.WriteString("select 1 from t_role A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {

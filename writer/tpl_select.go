@@ -7,21 +7,21 @@ var fnQueryFirstByPrimaryKey = `
 //
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
-// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+// SQL: select {{ JoinExpr .Fields "A.${.Field}" }} from {{ .TableName }} where A.{{ .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
 	var sqlBuilder strings.Builder
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "A.${.Field}" }}")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?")
+	sqlBuilder.WriteString(" from {{ .TableName }} A where A.{{ .PrimaryKey }}=?")
 	if sqlxmodel.ShowSQL() {
 		sqlxmodel.PrintSQL(sqlBuilder.String())
 	}
@@ -36,7 +36,7 @@ var fnQueryFirst = `
 //
 // QueryFirst(ctx, db, &record, "", "where {{ FormattedField .PrimaryKey }}=?", 100)
 //
-// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?
+// SQL: select {{ JoinExpr .Fields "A.${.Field}" }} from {{ .TableName }} A where A.{{ .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -44,14 +44,14 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "A.${.Field}" }}")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from {{ .TableName }}")
+	sqlBuilder.WriteString(" from {{ .TableName }} A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -80,7 +80,7 @@ var fnQueryList = `
 //
 // QueryList(ctx, db, &records, "", "where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc", 100)
 //
-// SQL: select {{ JoinExpr .Fields "${.FormattedField}" }} from {{ .TableName }} where {{ .PrimaryKey }}>? order by {{ .PrimaryKey }} desc
+// SQL: select {{ JoinExpr .Fields "A.${.Field}" }} from {{ .TableName }} A where {{ .PrimaryKey }}>? order by A.{{ .PrimaryKey }} desc
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.SelectContext, dest interface{}, selection string, clauseAndArgs ...interface{}) error {
@@ -88,14 +88,14 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 	var args []interface{}
 	sqlBuilder.Grow(128)
 	if selection == "" {
-		sqlBuilder.WriteString("select {{ JoinExpr .Fields "${.FormattedField}" }}")
+		sqlBuilder.WriteString("select {{ JoinExpr .Fields "A.${.Field}" }}")
 	} else {
 		if !sqlxmodel.HasPrefixToken(selection, "select") {
 			sqlBuilder.WriteString("select ")
 		}
 		sqlBuilder.WriteString(selection)
 	}
-	sqlBuilder.WriteString(" from {{ .TableName }}")
+	sqlBuilder.WriteString(" from {{ .TableName }} A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -122,14 +122,14 @@ var fnCount = `
 //
 // Count(ctx, db, "")
 //
-// SQL: select count(1) as c from {{ .TableName }}
+// SQL: select count(1) as c from {{ .TableName }} A
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (int64, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select count(1) as c from {{ .TableName }}")
+	sqlBuilder.WriteString("select count(1) as c from {{ .TableName }} A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {
@@ -159,14 +159,14 @@ var fnHas = `
 //
 // Has(ctx, db, "id=1")
 //
-// SQL: select 1 from {{ .TableName }} where id=1 limit 1
+// SQL: select 1 from {{ .TableName }} A where id=1 limit 1
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseAndArgs ...interface{}) (bool, error) {
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("select 1 from {{ .TableName }}")
+	sqlBuilder.WriteString("select 1 from {{ .TableName }} A")
 	if len(clauseAndArgs) > 0 {
 		args = clauseAndArgs[1:]
 		if clause, ok := clauseAndArgs[0].(string); ok {

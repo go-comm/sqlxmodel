@@ -12,7 +12,7 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 	var sqlBuilder strings.Builder
 	var args []interface{}
 	sqlBuilder.Grow(64)
-	sqlBuilder.WriteString("update {{ .TableName }}")
+	sqlBuilder.WriteString("update {{ .TableName }} A")
 	if !sqlxmodel.HasPrefixToken(set, "set") {
 		sqlBuilder.WriteString(" set ")
 	} else {
