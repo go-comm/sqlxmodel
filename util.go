@@ -50,31 +50,24 @@ func IfClauseAppendWhere(s string) bool {
 	for ; i < len(s) && isSpace(s[i]); i++ {
 	}
 	s = s[i:]
-	if len(s) <= 0 {
+	if len(s) <= 0 { //  no where clause
 		return false
 	}
-	if len(s) < 5 {
-		return true
-	}
 	c := s[0]
-	possible := c == 'w' || c == 'o' || c == 'j' || c == 'l' || c == 'r' || c == 'i' || c == 'h'
+	if 'A' <= c && c <= 'Z' {
+		c = c - 'A' + 'a'
+	}
+	possible := c == 'w' || c == 'o' || c == 'j' || c == 'l' || c == 'r' || c == 'i' || c == 'g'
 	if !possible {
 		return true
 	}
-	i = 0
-	for ; i < len(s) && !isSpace(s[i]); i++ {
-		if i > 6 { // out of having
+	for i = 1; i < len(s) && !isSpace(s[i]); i++ {
+		if i >= 6 { // out of "where"
 			return true
 		}
 	}
-	token := s[:i]
-	possible = token == "where" || token == "WHERE" ||
-		token == "order" || token == "ORDER" ||
-		token == "join" || token == "JOIN" ||
-		token == "left" || token == "LEFT" ||
-		token == "right" || token == "RIGHT" ||
-		token == "inner" || token == "INNER" ||
-		token == "having" || token == "HAVING"
+	token := strings.ToLower(s[:i])
+	possible = token == "where" || token == "order" || token == "join" || token == "left" || token == "right" || token == "inner" || token == "group"
 	return !possible
 }
 
