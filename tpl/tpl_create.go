@@ -29,7 +29,7 @@ var FnInsertIgnore = `
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
-	s := "insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
+	s := "insert ignore into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
 	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
 		return nil, err
 	}
