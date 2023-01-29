@@ -287,7 +287,7 @@ func (model User) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 //
 // !!!Don't Edit it!!!
 func (model User) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
-	s := "insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)"
+	s := "insert ignore into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)"
 	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
 		return nil, err
 	}
@@ -340,7 +340,7 @@ func (model User) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 func (model User) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecContext, pk interface{}) (sql.Result, error) {
 	s := "delete from t_user where `id`=?"
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(s)
+		sqlxmodel.PrintSQL(s, pk)
 	}
 	return db.ExecContext(ctx, s, pk)
 }
@@ -733,7 +733,7 @@ func (model Role) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 //
 // !!!Don't Edit it!!!
 func (model Role) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
-	s := "insert into t_role(`id`,`name`)values(:id,:name)"
+	s := "insert ignore into t_role(`id`,`name`)values(:id,:name)"
 	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
 		return nil, err
 	}
@@ -786,7 +786,7 @@ func (model Role) SaveOnMysql(ctx context.Context, db sqlxmodel.NamedExecContext
 func (model Role) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecContext, pk interface{}) (sql.Result, error) {
 	s := "delete from t_role where `id`=?"
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(s)
+		sqlxmodel.PrintSQL(s, pk)
 	}
 	return db.ExecContext(ctx, s, pk)
 }
