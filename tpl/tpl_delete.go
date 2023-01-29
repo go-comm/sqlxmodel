@@ -11,7 +11,7 @@ var FnDeleteByPrimaryKey = `
 func (model {{ .Name | Title }}) DeleteByPrimaryKey(ctx context.Context, db sqlxmodel.ExecContext, pk interface{}) (sql.Result, error) {
 	s := "delete from {{ .TableName }} where {{ FormattedField .PrimaryKey }}=?"
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(s)
+		sqlxmodel.PrintSQL(s, pk)
 	}
 	return db.ExecContext(ctx, s, pk)
 }
