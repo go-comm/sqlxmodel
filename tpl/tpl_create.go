@@ -21,9 +21,9 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 `
 
 var FnInsertIgnore = `
-// Insert insert a record
+// Insert insert a record ignore duplicate key
 //
-// Insert(ctx, db, &record)
+// InsertIgnore(ctx, db, &record)
 //
 // SQL: insert ignore into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})
 //
