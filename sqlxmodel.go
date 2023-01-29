@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"sync/atomic"
 	"text/template"
 
-	"github.com/go-comm/sqlxmodel/writer"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -116,6 +116,23 @@ type ModelInfo struct {
 	Fields                []*ModelFieldInfo
 }
 
+const (
+	LCREATE = 1 << iota
+	LUPDATE
+	LREAD
+	LDELETE
+)
+
+type options struct {
+	lvl int
+}
+
+func WithLvl(lvl int) func(*options) {
+	return func(o *options) {
+		o.lvl = lvl
+	}
+}
+
 func NewSqlxModel(tagName string) *SqlxModel {
 	return &SqlxModel{
 		Mapper: NewReflectMapper(tagName),
@@ -179,11 +196,7 @@ func (m *SqlxModel) TryModel(e interface{}) *ModelInfo {
 	return mi
 }
 
-func (m *SqlxModel) WriteTo(w io.Writer, e0 interface{}, e1 ...interface{}) error {
-	es := append([]interface{}(nil), e0)
-	if len(e1) > 0 {
-		es = append(es, e1...)
-	}
+func (m *SqlxModel) WriteTo(w io.Writer, es []interface{}, opts []func(*options)) error {
 	tpl := template.New("").
 		Funcs(template.FuncMap{
 			"IsEmpty":        isEmpty,
@@ -193,17 +206,24 @@ func (m *SqlxModel) WriteTo(w io.Writer, e0 interface{}, e1 ...interface{}) erro
 			"JoinExpr":       joinExpr,
 		})
 	var err error
-	firstWriteHeader := true
-	for _, o := range es {
-		mi := m.TryModel(o)
-		if firstWriteHeader {
-			err = writer.WriteHeader(tpl, w, mi)
-			if err != nil {
-				return err
-			}
+
+	o := &options{}
+	o.lvl = LCREATE | LUPDATE | LREAD | LDELETE
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	if len(es) > 0 {
+		mi := m.TryModel(es[0])
+		err = WriteHeader(tpl, w, mi)
+		if err != nil {
+			return err
 		}
-		firstWriteHeader = false
-		err = writer.WriteBody(tpl, w, mi)
+	}
+
+	for _, e := range es {
+		mi := m.TryModel(e)
+		err = WriteBody(tpl, w, mi, o.lvl)
 		if err != nil {
 			return err
 		}
@@ -211,13 +231,22 @@ func (m *SqlxModel) WriteTo(w io.Writer, e0 interface{}, e1 ...interface{}) erro
 	return nil
 }
 
-func (m *SqlxModel) WriteToFile(path string, e0 interface{}, e1 ...interface{}) error {
+func (m *SqlxModel) WriteToFile(path string, e0 interface{}, e ...interface{}) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return m.WriteTo(f, e0, e1...)
+	return m.WriteTo(f, append([]interface{}{e0}, e...), nil)
+}
+
+func (m *SqlxModel) WriteToFileWithOptions(path string, es []interface{}, opts ...func(*options)) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return m.WriteTo(f, es, opts)
 }
 
 var (
@@ -238,9 +267,17 @@ func ShowSQL() bool {
 	return atomic.LoadInt32(&gShowSQL) != 0
 }
 
-func PrintSQL(v ...interface{}) {
-	if ShowSQL() && gSQLPrinter != nil {
-		gSQLPrinter(v...)
+func PrintSQL(query string, params ...interface{}) {
+	p := gSQLPrinter
+	if ShowSQL() && p != nil {
+		if len(params) <= 0 {
+			p(query)
+		} else {
+			var s strings.Builder
+			s.WriteString(query)
+			fmt.Fprintf(&s, "  %v", params)
+			p(s.String())
+		}
 	}
 }
 

@@ -52,7 +52,7 @@ func (model User) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 	}
 	sqlBuilder.WriteString(" from t_user A where A.id=?")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), pk)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), pk)
 }
@@ -94,7 +94,7 @@ func (model User) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), args...)
 }
@@ -136,7 +136,7 @@ func (model User) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.SelectContext(ctx, dest, sqlBuilder.String(), args...)
 }
@@ -174,7 +174,7 @@ func (model User) Update(ctx context.Context, db sqlxmodel.ExecContext, set stri
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
@@ -279,6 +279,24 @@ func (model User) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 	return db.NamedExecContext(ctx, s, values)
 }
 
+// Insert insert a record
+//
+// Insert(ctx, db, &record)
+//
+// SQL: insert ignore into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)
+//
+// !!!Don't Edit it!!!
+func (model User) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
+	s := "insert into t_user(`name`,`email`,`role_id`,`id`,`createtime`,`creater`,`modifytime`,`modifier`,`version`,`defunct`,`deleted`)values(:name,:email,:role_id,:id,:createtime,:creater,:modifytime,:modifier,:version,:defunct,:deleted)"
+	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
+		return nil, err
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(s)
+	}
+	return db.NamedExecContext(ctx, s, values)
+}
+
 // SaveOnMysql insert a record
 //
 // SaveOnMysql(ctx, db, &record)
@@ -353,7 +371,7 @@ func (model User) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAn
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
@@ -385,7 +403,7 @@ func (model User) Count(ctx context.Context, db sqlxmodel.QueryRowContext, claus
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64
@@ -421,7 +439,7 @@ func (model User) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseA
 	}
 	sqlBuilder.WriteString(" limit 1")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64
@@ -480,7 +498,7 @@ func (model Role) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetCo
 	}
 	sqlBuilder.WriteString(" from t_role A where A.id=?")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), pk)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), pk)
 }
@@ -522,7 +540,7 @@ func (model Role) QueryFirst(ctx context.Context, db sqlxmodel.GetContext, dest 
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), args...)
 }
@@ -564,7 +582,7 @@ func (model Role) QueryList(ctx context.Context, db sqlxmodel.SelectContext, des
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.SelectContext(ctx, dest, sqlBuilder.String(), args...)
 }
@@ -602,7 +620,7 @@ func (model Role) Update(ctx context.Context, db sqlxmodel.ExecContext, set stri
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
@@ -707,6 +725,24 @@ func (model Role) Insert(ctx context.Context, db sqlxmodel.NamedExecContext, val
 	return db.NamedExecContext(ctx, s, values)
 }
 
+// Insert insert a record
+//
+// Insert(ctx, db, &record)
+//
+// SQL: insert ignore into t_role(`id`,`name`)values(:id,:name)
+//
+// !!!Don't Edit it!!!
+func (model Role) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
+	s := "insert into t_role(`id`,`name`)values(:id,:name)"
+	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
+		return nil, err
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(s)
+	}
+	return db.NamedExecContext(ctx, s, values)
+}
+
 // SaveOnMysql insert a record
 //
 // SaveOnMysql(ctx, db, &record)
@@ -781,7 +817,7 @@ func (model Role) Delete(ctx context.Context, db sqlxmodel.ExecContext, clauseAn
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
@@ -813,7 +849,7 @@ func (model Role) Count(ctx context.Context, db sqlxmodel.QueryRowContext, claus
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64
@@ -849,7 +885,7 @@ func (model Role) Has(ctx context.Context, db sqlxmodel.QueryRowContext, clauseA
 	}
 	sqlBuilder.WriteString(" limit 1")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64

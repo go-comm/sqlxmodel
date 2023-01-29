@@ -15,7 +15,6 @@ import (
 type MockDB struct{}
 
 func (MockDB) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	log.Println(query, args)
 	if strings.Contains(query, "t_user") {
 		return json.Unmarshal([]byte(`{"id":"1000","name":"tom","role_id":1}`), dest)
 	}

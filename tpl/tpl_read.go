@@ -1,6 +1,6 @@
-package writer
+package tpl
 
-var fnQueryFirstByPrimaryKey = `
+var FnQueryFirstByPrimaryKey = `
 // QueryFirstByPrimaryKey query one record by primary key
 //
 // var records []*{{ .Name }}
@@ -23,13 +23,13 @@ func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db 
 	}
 	sqlBuilder.WriteString(" from {{ .TableName }} A where A.{{ .PrimaryKey }}=?")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), pk)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), pk)
 }
 `
 
-var fnQueryFirst = `
+var FnQueryFirst = `
 // QueryFirst query one record
 //
 // var record {{ .Name }}
@@ -67,13 +67,13 @@ func (model {{ .Name | Title }}) QueryFirst(ctx context.Context, db sqlxmodel.Ge
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.GetContext(ctx, dest, sqlBuilder.String(), args...)
 }
 `
 
-var fnQueryList = `
+var FnQueryList = `
 // QueryList query all records
 //
 // var records []*{{ .Name }}
@@ -111,13 +111,13 @@ func (model {{ .Name | Title }}) QueryList(ctx context.Context, db sqlxmodel.Sel
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.SelectContext(ctx, dest, sqlBuilder.String(), args...)
 }
 `
 
-var fnCount = `
+var FnCount = `
 // Count count
 //
 // Count(ctx, db, "")
@@ -145,7 +145,7 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64
@@ -154,7 +154,7 @@ func (model {{ .Name | Title }}) Count(ctx context.Context, db sqlxmodel.QueryRo
 }
 `
 
-var fnHas = `
+var FnHas = `
 // Has has record
 //
 // Has(ctx, db, "id=1")
@@ -183,7 +183,7 @@ func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowC
 	}
 	sqlBuilder.WriteString(" limit 1")
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	row := db.QueryRowContext(ctx, sqlBuilder.String(), args...)
 	var c int64
@@ -198,7 +198,7 @@ func (model {{ .Name | Title }}) Has(ctx context.Context, db sqlxmodel.QueryRowC
 }
 `
 
-var fnRelatedWith = `
+var FnRelatedWith = `
 // RelatedWith
 //
 // RelatedWith(ctx, db, "Creater", 1)
@@ -209,7 +209,7 @@ func (model *{{ .Name | Title }}) RelatedWith(ctx context.Context, db sqlxmodel.
 }
 `
 
-var fnRelatedWithRef = `
+var FnRelatedWithRef = `
 // RelatedWithRef
 //
 // RelatedWithRef(ctx, db, "Creater", "CreaterID")

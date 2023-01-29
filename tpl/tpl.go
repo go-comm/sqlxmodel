@@ -1,6 +1,6 @@
-package writer
+package tpl
 
-var tplHeader = `// !!!Don't Edit it!!!
+var Header = `// !!!Don't Edit it!!!
 package {{ .PackageName }}
 
 import (
@@ -28,7 +28,7 @@ var (
 )
 `
 
-var tplModel = `
+var Model = `
 // {{ .Name | Title }}Model model of {{ .Name }}
 //
 // !!!Don't Edit it!!!

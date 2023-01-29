@@ -1,6 +1,6 @@
-package writer
+package tpl
 
-var fnDeleteByPrimaryKey = `
+var FnDeleteByPrimaryKey = `
 // DeleteByPrimaryKey delete one record by primary key
 //
 // DeleteByPrimaryKey(ctx, db, 100)
@@ -42,7 +42,7 @@ func (model {{ .Name | Title }}) Delete(ctx context.Context, db sqlxmodel.ExecCo
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }

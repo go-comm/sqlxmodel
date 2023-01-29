@@ -1,6 +1,6 @@
-package writer
+package tpl
 
-var fnUpdate = `
+var FnUpdate = `
 // Update update a record
 //
 // Update(ctx, db, "{{ JoinExpr .Fields "${.FormattedField}=?" .PrimaryKey }}", "where {{ .PrimaryKey }}=?", 100)
@@ -34,13 +34,13 @@ func (model {{ .Name | Title }}) Update(ctx context.Context, db sqlxmodel.ExecCo
 		}
 	}
 	if sqlxmodel.ShowSQL() {
-		sqlxmodel.PrintSQL(sqlBuilder.String())
+		sqlxmodel.PrintSQL(sqlBuilder.String(), args...)
 	}
 	return db.ExecContext(ctx, sqlBuilder.String(), args...)
 }
 `
 
-var fnNamedUpdate = `
+var FnNamedUpdate = `
 // NamedUpdate update a record
 //
 // NamedUpdate(ctx, db, "", "", &record)
@@ -82,7 +82,7 @@ func (model {{ .Name | Title }}) NamedUpdate(ctx context.Context, db sqlxmodel.N
 }
 `
 
-var fnNamedUpdateColumns = `
+var FnNamedUpdateColumns = `
 // NamedUpdateColumns update a record
 //
 // NamedUpdateColumns(ctx, db, nil, "", &record)

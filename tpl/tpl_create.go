@@ -1,6 +1,6 @@
-package writer
+package tpl
 
-var fnInsert = `
+var FnInsert = `
 // Insert insert a record
 //
 // Insert(ctx, db, &record)
@@ -20,7 +20,27 @@ func (model {{ .Name | Title }}) Insert(ctx context.Context, db sqlxmodel.NamedE
 }
 `
 
-var fnSaveOnMysql = `
+var FnInsertIgnore = `
+// Insert insert a record
+//
+// Insert(ctx, db, &record)
+//
+// SQL: insert ignore into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})
+//
+// !!!Don't Edit it!!!
+func (model {{ .Name | Title }}) InsertIgnore(ctx context.Context, db sqlxmodel.NamedExecContext, values interface{}) (sql.Result, error) {
+	s := "insert into {{ .TableName }}({{ JoinExpr .Fields "${.FormattedField}" }})values({{ JoinExpr .Fields ":${.Field}" }})"
+	if err := sqlxmodel.BeforeInsert(ctx, values); err != nil {
+		return nil, err
+	}
+	if sqlxmodel.ShowSQL() {
+		sqlxmodel.PrintSQL(s)
+	}
+	return db.NamedExecContext(ctx, s, values)
+}
+`
+
+var FnSaveOnMysql = `
 // SaveOnMysql insert a record
 //
 // SaveOnMysql(ctx, db, &record)
