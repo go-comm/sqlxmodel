@@ -7,7 +7,7 @@ var FnQueryFirstByPrimaryKey = `
 //
 // QueryFirstByPrimaryKey(ctx, db, &records, "", 100)
 //
-// SQL: select {{ JoinExpr .Fields "A.${.Field}" }} from {{ .TableName }} where A.{{ .PrimaryKey }}=?
+// SQL: select {{ JoinExpr .Fields "A.${.Field}" }} from {{ .TableName }} A where A.{{ .PrimaryKey }}=?
 //
 // !!!Don't Edit it!!!
 func (model {{ .Name | Title }}) QueryFirstByPrimaryKey(ctx context.Context, db sqlxmodel.GetContext, dest interface{}, selection string, pk interface{}) error {
