@@ -167,10 +167,10 @@ func WithIn(clause string, args []interface{}, offset int) (string, []interface{
 			args = args[1:]
 			continue
 		}
+		s.WriteString(clause[:off])
 		if args[0] == nil || rv.Len() <= 0 {
 			s.WriteString("(NULL)")
 		} else {
-			s.WriteString(clause[:off])
 			s.WriteByte('(')
 			for i := 0; i < rv.Len(); i++ {
 				if i > 0 {
